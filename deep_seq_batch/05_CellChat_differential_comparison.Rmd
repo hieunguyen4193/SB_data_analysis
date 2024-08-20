@@ -1,0 +1,688 @@
+---
+title: "Cell chat interaction analysis with multi-sample comparisons, case `r params$PROJECT`"
+author:
+  - "trnguyen@ukaachen.de"
+date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    keep_md: no
+    df_print: paged
+    toc: true
+    toc_float:
+      toc_collapsed: false
+    toc_depth: 3
+    number_sections: true
+    theme: lumen
+params:
+  PROJECT: NA
+  outdir: NA
+---
+  
+  
+```{css zoom-lib-src, echo = FALSE}
+script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+```
+
+```{js zoom-jquery, echo = FALSE}
+$(document).ready(function() {
+  $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+  // onClick function for all plots (img's)
+    $('img:not(.zoomImg)').click(function() {
+      $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+      $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
+    });
+    // onClick function for zoomImg
+    $('img.zoomImg').click(function() {
+      $('.zoomDiv').css({opacity: '0', width: '0%'}); 
+    });
+  });
+```
+
+<style type="text/css">
+    div.datatables { height: auto !important;}
+</style>
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.height=10, fig.width=18}
+##### clean up #####
+# gc()
+# rm(list = ls())
+
+path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"
+
+source(file.path(path.to.project.src, "00_import_libraries.R"))
+source(file.path(path.to.project.src, "00_helper_functions.R"))
+
+#####----------------------------------------------------------------------#####
+# CONFIGURATIONS AND PREPRATIONS
+#####----------------------------------------------------------------------#####
+# outdir <- "/media/hieunguyen/HD0/outdir/CRC1382"
+# PROJECT <- "SBharadwaj_20240318_Sample_7_8"
+
+outdir <- params$outdir
+PROJECT <- params$PROJECT
+
+path.to.main.input <- file.path(outdir, "SeuratV5", PROJECT)
+path.to.main.output <- file.path(path.to.main.input, "data_analysis")
+dir.create(path.to.main.output, showWarnings = FALSE, recursive = TRUE)
+
+path.to.01.output <- file.path(path.to.main.output, "01_output")
+path.to.02.output <- file.path(path.to.main.output, "02_output")
+path.to.04.output <- file.path(path.to.main.output, "04_output")
+path.to.05.output <- file.path(path.to.main.output, "05_output")
+dir.create(path.to.05.output, showWarnings = FALSE, recursive = TRUE)
+
+s.obj <- readRDS(file.path(path.to.01.output,sprintf("Project_%s.rds", PROJECT)))
+
+meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>% rowwise() %>%
+  mutate(condition = str_split(name, "_")[[1]][[1]]) %>%
+  mutate(organ = str_split(name, "_")[[1]][[2]]) %>%
+  mutate(celltype = str_split(name, "_")[[1]][[3]])  %>% 
+  column_to_rownames("barcode")
+
+meta.data <- meta.data[row.names(s.obj@meta.data),]
+
+s.obj <- AddMetaData(object = s.obj, metadata = meta.data$condition, col.name = "condition")
+s.obj <- AddMetaData(object = s.obj, metadata = meta.data$organ, col.name = "organ")
+s.obj <- AddMetaData(object = s.obj, metadata = meta.data$celltype, col.name = "celltype")
+
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
+if ("CellChat" %in% installed.packages() == FALSE){
+  devtools::install_github("jinworks/CellChat")
+  install.packages("/media/hieunguyen/HD0/storage/offline_pkgs/ggplot2_3.4.4.tar.gz", type = "source", repos = NULL)
+}
+library("CellChat")
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
+DimPlot(objec = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, repel = TRUE)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
+DimPlot(objec = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, repel = TRUE, group.by = "name")
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
+DimPlot(objec = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, repel = TRUE, group.by = "prediction2")
+```
+
+## All samples in integrated UMAP {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+Idents(s.obj) <- "cca.cluster.0.5"
+FeaturePlot(s.obj, features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), label = TRUE)
+```
+
+## Each sample in integrated UMAP {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+Idents(s.obj) <- "cca.cluster.0.5"
+for (sample.id in unique(s.obj$name)){
+  cat(sprintf("### Sample %s \n", sample.id))
+  p <- FeaturePlot(subset(s.obj, name == sample.id), features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), label = TRUE)  
+  print(p)
+  cat("\n \n")
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+##### Assign cells to groups by the expression of Ciita, Foxp3, Klrg1 and Gata3 genes
+cells <- hash()
+for (input.gene in c("Ciita", "Foxp3", "Klrg1", "Gata3")){
+  tmp <- GetAssayData(s.obj, assay = "SCT", slot = "data")[input.gene, ]  
+  cells[[input.gene]] <- tmp[tmp > 0] %>% names()
+}
+
+group1.1 <- intersect(cells$Foxp3, cells$Klrg1)
+group1.2 <- intersect(cells$Foxp3, cells$Gata3)
+
+group1.cells <- unique(c(group1.1, group1.2))
+group2.cells <- cells$Ciita
+
+meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>%
+  rowwise() %>%
+  mutate(group = ifelse(barcode %in% group1.cells, "Group1", ifelse(barcode %in% group2.cells, "Group2", "others"))) %>%
+  column_to_rownames("barcode")
+
+meta.data <- meta.data[row.names(s.obj@meta.data), ]
+
+s.obj <- AddMetaData(object = s.obj, metadata = meta.data$group, col.name = "group")
+
+```
+
+## UMAP: groups
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+FeaturePlot(
+  object = s.obj, reduction = "cca_UMAP", features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), ncol = 2
+)
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, repel = TRUE, group.by = "group", pt.size = 1)
+```
+
+## Violin plot: Ciita, Foxp3, Klrg1, Gata3 genes, all samples
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+VlnPlot(object = s.obj, features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), group.by = "cca.cluster.0.5", ncol = 2, assay = "SCT", slot = "data")
+```
+
+## Violin plot: Ciita, Foxp3, Klrg1, Gata3 genes, each sample {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (sample.id in unique(s.obj$name)){
+  cat(sprintf("### Sample %s \n", sample.id))
+  p <- VlnPlot(object = subset(s.obj, name == sample.id), features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), group.by = "cca.cluster.0.5", ncol = 2, assay = "SCT", slot = "data")  
+  print(p)
+  cat("\n \n")
+}
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+group1.clusters <- unique(intersect(predefined.clusters[[PROJECT]][["Foxp3"]], predefined.clusters[[PROJECT]][["Klrg1"]]),
+                          intersect(predefined.clusters[[PROJECT]][["Foxp3"]], predefined.clusters[[PROJECT]][["Gata3"]]))
+group2.clusters <- predefined.clusters[[PROJECT]][["Ciita"]]
+
+group1.clusters <- to_vec( for (item in group1.clusters) sprintf("cluster%s", item))
+group2.clusters <- to_vec( for (item in group2.clusters) sprintf("cluster%s", item))
+
+meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>%
+  mutate(clusterid = sprintf("cluster%s", cca.cluster.0.5)) %>%
+  column_to_rownames("barcode")
+
+meta.data$clusterid <- factor(meta.data$clusterid, levels = to_vec( for(item in seq(0, length(unique(s.obj$cca.cluster.0.5)) - 1))sprintf("cluster%s", item))) 
+  
+meta.data <- meta.data[row.names(s.obj@meta.data),]
+s.obj <- AddMetaData(object = s.obj, metadata = meta.data$clusterid, col.name = "clusterid")
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+print("List of clusters that we focus on in CellChat results: \n")
+print(sprintf("Foxp3 and Klrg1 OR Foxp3 and Gata3: %s \n", paste(group1.clusters, collapse = ", ")))
+
+print(sprintf("Ciita: %s", paste(group2.clusters, collapse = ", ")))
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+```
+
+## Number of cells in each assigned cluster ID
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+table(s.obj$cca.cluster.0.5) %>% as.data.frame() %>% arrange(desc(Freq))
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+condition.samples <- list()
+for (input.condition in unique(s.obj$condition)){
+  condition.samples[[input.condition]] <- subset(s.obj@meta.data, s.obj@meta.data$condition == input.condition)$name %>% unique()
+}
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+data.list <- list()
+cellchat.obj <- list()
+
+library(CellChat)
+for (sample.id in unique(s.obj$condition)){
+  if (file.exists(file.path(path.to.05.output, sprintf("cellchat_single_object_%s.rds", sample.id))) == FALSE){
+    print(sprintf("working on sample: %s", sample.id))
+    tmp.s.obj <- subset(s.obj, condition == sample.id)
+    
+    data.list[[sample.id]] <- tmp.s.obj
+    Idents(tmp.s.obj) <- "clusterid"
+    
+    labels <- Idents(tmp.s.obj)
+    meta <- data.frame(labels = labels, row.names = names(labels)) 
+    tmp.cellchat <- createCellChat(object = tmp.s.obj, group.by = "ident", assay = "SCT")
+    
+    ##### Select the tmp.cellchat database: human or mouse
+    cellchatDB <- CellChatDB.mouse 
+    showDatabaseCategory(cellchatDB)
+    
+    cellchatDB.use <- subsetDB(cellchatDB) # use all, except non protein signaling
+    tmp.cellchat@DB <- cellchatDB.use
+    
+    ##### data in tmp.cellchat object pre-processing
+    tmp.cellchat <- subsetData(tmp.cellchat) # This step is necessary even if using the whole database
+    future::plan("multisession", workers = 4) # do parallel
+    if ("presto" %in% installed.packages() == FALSE){
+      devtools::install_github('immunogenomics/presto')
+    }
+    
+    tmp.cellchat <- identifyOverExpressedGenes(tmp.cellchat)
+    tmp.cellchat <- identifyOverExpressedInteractions(tmp.cellchat)
+    
+    ##### Compute the communication prob
+    tmp.cellchat <- computeCommunProb(tmp.cellchat, type = "triMean")
+    tmp.cellchat <- filterCommunication(tmp.cellchat, min.cells = 10)
+    
+    ##### infer cell-cell communication at a signaling pathway
+    tmp.cellchat <- computeCommunProbPathway(tmp.cellchat)
+    
+    tmp.cellchat <- netAnalysis_computeCentrality(tmp.cellchat)
+    ##### aggregate cell-cell communication network
+    tmp.cellchat <- aggregateNet(tmp.cellchat)
+    cellchat.obj[[sample.id]] <- tmp.cellchat
+    
+    saveRDS(cellchat.obj[[sample.id]], file.path(path.to.05.output, sprintf("cellchat_single_object_%s.rds", sample.id)))
+  } else {
+    cellchat.obj[[sample.id]] <- readRDS(file.path(path.to.05.output, sprintf("cellchat_single_object_%s.rds", sample.id)))
+  }
+}
+cellchat <- mergeCellChat(cellchat.obj, add.names = names(cellchat.obj))
+```
+
+# Identify altered interactions and cell populations
+
+## Compare the total number of interactions and interaction strength
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+gg1 <- compareInteractions(cellchat, show.legend = F, group = c(1,2))
+gg2 <- compareInteractions(cellchat, show.legend = F, group = c(1,2), measure = "weight")
+gg1 + gg2
+```
+
+## Compare the number of interactions and interaction strength among different cell populations
+
+### Circle plot showing differential number of interactions or interaction strength among different cell populations across two datasets
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_diffInteraction(cellchat, weight.scale = T, sources.use = c(group1.clusters, group2.clusters), targets.use = c(group1.clusters, group2.clusters))
+netVisual_diffInteraction(cellchat, weight.scale = T, sources.use = c(group1.clusters, group2.clusters), targets.use = c(group1.clusters, group2.clusters), measure = "weight")
+```
+
+### Heatmap showing differential number of interactions or interaction strength among different cell populations across two datasets
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+gg1 <- netVisual_heatmap(cellchat)
+#> Do heatmap based on a merged object
+gg2 <- netVisual_heatmap(cellchat, measure = "weight")
+#> Do heatmap based on a merged object
+gg1 + gg2
+```
+
+### Circle plot showing the number of interactions or interaction strength among different cell populations across multiple datasets
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+weight.max <- getMaxWeight(cellchat.obj, attribute = c("idents","count"))
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(cellchat.obj)) {
+  netVisual_circle(cellchat.obj[[i]]@net$count, weight.scale = T, label.edge= F, edge.weight.max = weight.max[2], edge.width.max = 12, title.name = paste0("Number of interactions - ", names(cellchat.obj)[i]), sources.use = c(group1.clusters, group2.clusters), targets.use = c(group1.clusters, group2.clusters))
+}
+```
+
+### Circle plot showing the differential number of interactions or interaction strength among coarse cell types
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+group.cellType <- unlist(lapply(sort(unique(s.obj$cca.cluster.0.5)), function(x){
+  if (sprintf("cluster%s", x) %in% group1.clusters == TRUE){
+    return("Group1")
+  } else if (sprintf("cluster%s", x) %in% group2.clusters == TRUE){
+    return("Group2")
+  } else {
+    return("others")
+  }
+}))
+group.cellType <- factor(group.cellType, levels = c(unique(s.obj$group)))
+cellchat.obj <- lapply(cellchat.obj, function(x) {mergeInteractions(x, group.cellType)})
+cellchat <- mergeCellChat(cellchat.obj, add.names = names(cellchat.obj))
+
+weight.max <- getMaxWeight(cellchat.obj, slot.name = c("idents", "net", "net"), attribute = c("idents","count", "count.merged"))
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(cellchat.obj)) {
+  netVisual_circle(cellchat.obj[[i]]@net$count.merged, weight.scale = T, label.edge= T, edge.weight.max = weight.max[3], edge.width.max = 12, title.name = paste0("Number of interactions - ", names(cellchat.obj)[i]))
+}
+```
+
+## Compare the major sources and targets in a 2D space
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_diffInteraction(cellchat, weight.scale = T, measure = "count.merged", label.edge = T)
+netVisual_diffInteraction(cellchat, weight.scale = T, measure = "weight.merged", label.edge = T)
+```
+
+### Identify cell populations with significant changes in sending or receiving signals
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+num.link <- sapply(cellchat.obj, function(x) {rowSums(x@net$count) + colSums(x@net$count)-diag(x@net$count)})
+weight.MinMax <- c(min(num.link), max(num.link)) # control the dot size in the different datasets
+gg <- list()
+for (i in 1:length(cellchat.obj)) {
+  # cellchat.obj[[i]] <- netAnalysis_computeCentrality(cellchat.obj[[i]])
+  gg[[i]] <- netAnalysis_signalingRole_scatter(cellchat.obj[[i]], title = names(cellchat.obj)[i], weight.MinMax = weight.MinMax)
+}
+patchwork::wrap_plots(plots = gg)
+```
+
+### Identify the signaling changes of specific cell populations {.tabset}
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (i in seq(0, length(unique(s.obj$clusterid)) - 1)){
+  input.cluster <- sprintf("cluster%s", i)
+  cat(sprintf("#### Cluster %s \n", i))
+  gg1 <- netAnalysis_signalingChanges_scatter(cellchat, idents.use = input.cluster)
+  print(gg1)  
+  cat("\n \n")
+}
+
+```
+
+
+# Identify altered signaling with distinct network architecture and interaction strength
+
+## Identify signaling networks with larger (or less) difference as well as signaling groups based on their functional/structure similarity
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+# reticulate::py_install(packages = 'umap-learn')
+
+cellchat <- computeNetSimilarityPairwise(cellchat, type = "functional")
+#> Compute signaling network similarity for datasets 1 2
+cellchat <- netEmbedding(cellchat, type = "functional")
+#> Manifold learning of the signaling networks for datasets 1 2
+cellchat <- netClustering(cellchat, type = "functional")
+#> Classification learning of the signaling networks for datasets 1 2
+# Visualization in 2D-space
+netVisual_embeddingPairwise(cellchat, type = "functional", label.size = 3.5)
+#> 2D visualization of signaling networks from datasets 1 2
+```
+
+## Identify signaling groups based on structure similarity
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+if (file.exists(file.path(path.to.05.output, "cellchat.manifold_learning.rds")) == FALSE){
+  cellchat <- computeNetSimilarityPairwise(cellchat, type = "structural")
+  cellchat <- netEmbedding(cellchat, type = "structural")
+  cellchat <- netClustering(cellchat, type = "structural")
+  saveRDS(object = cellchat, file.path(path.to.05.output, "cellchat.manifold_learning.rds"))  
+} else {
+  cellchat <- readRDS(file.path(path.to.05.output, "cellchat.manifold_learning.rds"))
+}
+netVisual_embeddingPairwise(cellchat, type = "structural", label.size = 3.5)
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+netVisual_embeddingPairwiseZoomIn(cellchat, type = "structural", nCol = 2)
+#>
+```
+
+## Compute and visualize the pathway distance in the learned joint manifold
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+rankSimilarity(cellchat, type = "functional")
+# reticulate::install_python(version = '3.8')
+# reticulate::py_install(packages ='umap-learn')
+```
+
+## Identify altered signaling with distinct interaction strength
+### Compare the overall information flow of each signaling pathway or ligand-receptor pair
+By comparing the information flow/interaction strengh of each signaling pathway, we can identify signaling pathways, 
+- (i) turn off, 
+
+- (ii) decrease, 
+
+- (iii) turn on or 
+
+- (iv) increase, by change their information flow at one condition as compared to another condition.
+
+In this plot, we show the **information flow** for each pathway. This **information flow** is defined as *the sum of communication probability among all pairs of cells groups in the inffered network* = *total weights in the network*.
+
+A paired Wilcoxon test is performed to determine if the signals are statistically different. **Significantly different pathways** are shown in "red" or "blue", otherwise they are in "black". 
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+gg1 <- rankNet(cellchat, mode = "comparison", measure = "weight", sources.use = NULL, targets.use = NULL, stacked = T, do.stat = TRUE)
+gg2 <- rankNet(cellchat, mode = "comparison", measure = "weight", sources.use = NULL, targets.use = NULL, stacked = F, do.stat = TRUE)
+
+gg1 + gg2
+```
+
+Note that the **Information flow** here has been scaled for visualization purpose only. For raw values of **information flow**, please see the table below
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=21, fig.height=15}
+sample1 <- names(cellchat.obj)[[1]]
+sample2 <- names(cellchat.obj)[[2]]
+
+ranknet.data.sample1 <- gg2$data %>% subset(group == sample1)
+colnames(ranknet.data.sample1) <- c("name", sprintf("contribution_%s", sample1), sprintf("contribution.scaled.%s", sample1), "group", sprintf("contribution.relative.%s", sample1), "pvalues")
+
+ranknet.data.sample2 <- gg2$data %>% subset(group == sample2)
+colnames(ranknet.data.sample2) <- c("name", sprintf("contribution_%s", sample2), sprintf("contribution.scaled.%s", sample2), "group", sprintf("contribution.relative.%s", sample2), "pvalues")
+
+ranknet.data.sample2 <- ranknet.data.sample2 %>%
+  subset(select = -c(pvalues))
+ranknet.fulldf <- merge(ranknet.data.sample1, ranknet.data.sample2, by.x = "name", by.y = "name") 
+
+ranknet.fulldf %>% create_dt()
+```
+
+
+### Compare outgoing (or incoming) signaling patterns associated with each cell population
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+library(ComplexHeatmap)
+```
+
+#### Outgoing pattern
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+i = 1
+# combining all the identified signaling pathways from different datasets 
+pathway.union <- union(cellchat.obj[[i]]@netP$pathways, cellchat.obj[[i+1]]@netP$pathways)
+ht1 = netAnalysis_signalingRole_heatmap(cellchat.obj[[i]], pattern = "outgoing", signaling = pathway.union, title = names(cellchat.obj)[i], width = 20, height = 20)
+
+ht1
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+ht2 = netAnalysis_signalingRole_heatmap(cellchat.obj[[i+1]], pattern = "outgoing", signaling = pathway.union, title = names(cellchat.obj)[i+1], width = 20, height = 20)
+ht2
+```
+
+#### Incoming pattern
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+ht1 = netAnalysis_signalingRole_heatmap(cellchat.obj[[i]], pattern = "incoming", signaling = pathway.union, title = names(cellchat.obj)[i], width = 20, height = 20, color.heatmap = "GnBu")
+ht1
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+ht2 = netAnalysis_signalingRole_heatmap(cellchat.obj[[i+1]], pattern = "incoming", signaling = pathway.union, title = names(cellchat.obj)[i+1], width = 20, height = 20, color.heatmap = "GnBu")
+ht2
+```
+
+#### All pattern
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+ht1 = netAnalysis_signalingRole_heatmap(cellchat.obj[[i]], pattern = "all", signaling = pathway.union, title = names(cellchat.obj)[i], width = 20, height = 20, color.heatmap = "OrRd")
+ht1
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+ht2 = netAnalysis_signalingRole_heatmap(cellchat.obj[[i+1]], pattern = "all", signaling = pathway.union, title = names(cellchat.obj)[i+1], width = 20, height = 20, color.heatmap = "OrRd")
+ht2
+```
+
+# Identify the up-gulated and down-regulated signaling ligand-receptor pairs
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+netVisual_bubble(cellchat, sources.use = group1.clusters, targets.use = group2.clusters,  comparison = c(1, 2), angle.x = 45)
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+gg1 <- netVisual_bubble(cellchat, sources.use = group1.clusters, targets.use = group2.clusters,  comparison = c(1, 2), max.dataset = 2, title.name = sprintf("Increased signaling in %s", names(cellchat.obj)[[2]]), angle.x = 45, remove.isolate = T)
+#> Comparing communications on a merged object
+gg2 <- netVisual_bubble(cellchat, sources.use = group1.clusters, targets.use = group2.clusters,  comparison = c(1, 2), max.dataset = 1, title.name = sprintf("Decreased signaling in %s", names(cellchat.obj[[2]])), angle.x = 45, remove.isolate = T)
+#> Comparing communications on a merged object
+gg1 + gg2
+```
+
+## Identify dysfunctional signaling by using differential expression analysis
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+# define a positive dataset, i.e., the dataset with positive fold change against the other dataset
+pos.dataset <- names(cellchat.obj)[2]
+logFC.cutoff <- 0.1
+print(sprintf("Define the %s group as positive dataset", pos.dataset))
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+# define a char name used for storing the results of differential expression analysis
+features.name = paste0(pos.dataset, ".merged")
+
+# perform differential expression analysis 
+# Of note, compared to CellChat version < v2, CellChat v2 now performs an ultra-fast Wilcoxon test using the presto package, which gives smaller values of logFC. Thus we here set a smaller value of thresh.fc compared to the original one (thresh.fc = 0.1). Users can also provide a vector and dataframe of customized DEGs by modifying the cellchat@var.features$LS.merged and cellchat@var.features$LS.merged.info. 
+
+cellchat <- identifyOverExpressedGenes(cellchat, group.dataset = "datasets", pos.dataset = pos.dataset, features.name = features.name, only.pos = FALSE, thresh.pc = 0.1, thresh.fc = 0.05,thresh.p = 0.05, group.DE.combined = FALSE) 
+
+net <- netMappingDEG(cellchat, features.name = features.name, variable.all = TRUE)
+
+net <- net %>% rowwise() %>%
+  mutate(pair_LG_cluster_name = sprintf("%s_%s_%s_%s", source, ligand, target, receptor))
+```
+
+- A pair of Ligand and Receptor (in a signaling pathway) is said to be **up-regulated** in the "chosen positive sample" if the `logFC.ligand >= LogFC.threshold` **AND** `logFC.receptor >= logFC.threshold` and p-value <= 0.05. 
+
+- A pair of Ligand and Receptor (in a signaling pathway) is said to be **down-regulated** in the "chosen positive sample" if the `logFC.ligand < -LogFC.threshold` **AND** `logFC.receptor < -logFC.threshold` and p-value <= 0.05. 
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+net.up.both.LG <- subsetCommunication(cellchat, net = net, datasets = sample1, 
+                                      ligand.logFC = logFC.cutoff, ligand.pvalues = 0.05,
+                                      receptor.logFC = logFC.cutoff, receptor.pvalues = 0.05) %>%
+  rowwise() %>%
+  mutate(pair_LG_cluster_name = sprintf("%s_%s_%s_%s", source, ligand, target, receptor))
+
+net.down.both.LG <- subsetCommunication(cellchat, net = net, datasets = sample2, 
+                                        ligand.logFC = -logFC.cutoff, ligand.pvalues = 0.05, 
+                                        receptor.logFC = -logFC.cutoff, receptor.pvalues = 0.05)%>%
+  rowwise() %>%
+  mutate(pair_LG_cluster_name = sprintf("%s_%s_%s_%s", source, ligand, target, receptor))
+```
+
+Here we choose genes that are:
+
+- Up in both Ligand and Receptor. 
+
+- Down in both Ligand and Receptor
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+gene.up <- extractGeneSubsetFromPair(net.up.both.LG, cellchat)
+gene.down <- extractGeneSubsetFromPair(net.down.both.LG, cellchat)
+```
+
+## Visualize the identified up-regulated and down-regulated signaling ligand-receptor pairs
+
+### Bubble plot
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+pairLR.use.up = net.up.both.LG[, "interaction_name", drop = F]
+
+gg1 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = 4, targets.use = c(5:11), comparison = c(1, 2),  angle.x = 90, remove.isolate = T,title.name = paste0("Up-regulated signaling in ", names(cellchat.obj)[2]))
+
+#> Comparing communications on a merged object
+
+pairLR.use.down = net.down.both.LG[, "interaction_name", drop = F]
+
+gg2 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, sources.use = 4, targets.use = c(5:11), comparison = c(1, 2),  angle.x = 90, remove.isolate = T,title.name = paste0("Down-regulated signaling in ", names(cellchat.obj)[2]))
+
+#> Comparing communications on a merged object
+gg1 + gg2
+```
+
+### Chord diagram
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+# Chord diagram
+par(mfrow = c(1,2), xpd=TRUE)
+tryCatch( { 
+  netVisual_chord_gene(cellchat.obj[[1]], sources.use = group1.clusters, targets.use = group2.clusters, slot.name = 'net', net = net.up.both.LG, lab.cex = 0.8, small.gap = 3.5, title.name = paste0("Up-regulated signaling in ", names(cellchat.obj)[2]))
+  }, error = function(e) {ggplot() + ggtitle("No signaling links inferred.")})
+    
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+tryCatch( { 
+netVisual_chord_gene(cellchat.obj[[2]], sources.use = group1.clusters, targets.use = group2.clusters, slot.name = 'net', net = net.down.both.LG, lab.cex = 0.8, small.gap = 3.5, title.name = paste0("Down-regulated signaling in ", names(cellchat.obj)[2]))}, error = function(e){ ggplot() + ggtitle("No signaling links inferred")})
+```
+
+# Visually compare cell-cell communication using Hierarchy plot, Circle plot or Chord diagram for each signaling pathway
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+all.pathways <- intersect(cellchat@netP[["ctrl"]]$pathways, cellchat@netP[["treated"]]$pathways)
+groups <- split(all.pathways, seq(1, 7))
+
+```
+
+
+## Circle plot
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (group in names(groups)){
+  cat(sprintf("### Group %s {.tabset} \n \n", group))
+  for (pathway in groups[[group]]){
+    cat(sprintf("#### Pathway: %s \n", pathway))
+    pathways.show <- c(pathway) 
+    weight.max <- getMaxWeight(cellchat.obj, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+    par(mfrow = c(1,1), xpd=TRUE)
+    for (i in 1:length(cellchat.obj)) {
+      netVisual_aggregate(cellchat.obj[[i]], signaling = pathways.show, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(cellchat.obj)[i]))
+    }
+    cat("\n \n")
+  }
+}
+```
+
+## Heatmap
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+
+for (group in names(groups)){
+  cat(sprintf("### Group %s {.tabset} \n \n", group))
+  cat("\n \n")
+  for (pathway in groups[[group]]){
+    cat(sprintf("#### Pathway: %s \n", pathway))
+    pathways.show <- c(pathway) 
+    par(mfrow = c(1,1), xpd=TRUE)
+    ht <- list()
+    for (i in 1:length(cellchat.obj)) {
+      tryCatch( { 
+        ht[[i]] <- netVisual_heatmap(cellchat.obj[[i]], signaling = pathways.show, color.heatmap = "Reds",title.name = paste(pathways.show, "signaling ",names(cellchat.obj)[i]))
+        }, error = function(e) {})
+    }
+    if (length(ht) == 2){
+        p <- ComplexHeatmap::draw(ht[[1]] + ht[[2]], ht_gap = unit(0.5, "cm"))      
+    } else {
+      p <- ggplot() + ggtitle("Not enough data to generate the heatmap")
+    }
+    print(p)
+    cat("\n \n")
+  }
+}
+```
+
+## Chord diagram
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (group in names(groups)){
+  cat(sprintf("### Group %s {.tabset} \n \n", group))
+  for (pathway in groups[[group]]){
+    cat(sprintf("#### Pathway: %s \n", pathway))
+    pathways.show <- c(pathway) 
+    par(mfrow = c(1,1), xpd=TRUE)
+    for (i in 1:length(cellchat.obj)) {
+      netVisual_aggregate(cellchat.obj[[i]], signaling = pathways.show, layout = "chord", signaling.name = paste(pathways.show, names(cellchat.obj)[i]))
+    }
+    cat("\n \n")
+  }
+}
+```
+
+# Compare the signaling gene expression distribution between different datasets {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+cellchat@meta$datasets = factor(cellchat@meta$datasets, levels = c(names(cellchat.obj)[[1]], names(cellchat.obj)[[2]])) # set factor level
+for (group in names(groups)){
+  cat(sprintf("## Group %s {.tabset} \n \n", group))
+  for (pathway in groups[[group]]){
+    cat(sprintf("### Pathway: %s \n", pathway))
+    p <- plotGeneExpression(cellchat, signaling = pathway, split.by = "datasets", colors.ggplot = T, type = "violin") + theme(legend.position = "bottom")
+    print(p)
+    cat("\n \n")
+  }
+}
+
+```

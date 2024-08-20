@@ -1,0 +1,343 @@
+# Differential gene expression between conditions
+
+## ctrl_gut_CD45 vs treated_gut_CD45
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+all.diff.markers <- hash()
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+sample1 <- "treated_gut_CD45"
+sample2 <- "ctrl_gut_CD45"
+
+if (file.exists(file.path(path.to.01.output, sprintf("diff_markers_%s_vs_%s.rds", sample1, sample2))) == FALSE){
+  all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]] <- hash()
+  
+  for (cluster.id in unique(s.obj$seurat_clusters)){
+    count.sample1 <- cell.count.in.clusters[, c("Var1", cluster.id)] %>% subset(Var1 == sample1)
+    count.sample1 <- count.sample1[[cluster.id]]
+    
+    count.sample2 <- cell.count.in.clusters[, c("Var1", cluster.id)] %>% subset(Var1 == sample2)
+    count.sample2 <- count.sample2[[cluster.id]]
+    if (count.sample1 != 0 & count.sample2 != 0){
+          tmp.subset.s.obj <- subset(s.obj, seurat_clusters == cluster.id & name %in% c(sample1, sample2))
+      tmp.count <- table(tmp.subset.s.obj$name) %>% as.data.frame()
+      colnames(tmp.count) <- c("name", "count")
+      tmp.count <- merge(data.frame(name = unique(tmp.subset.s.obj$name)), tmp.count, by.x = "name", by.y = "name", all.x = TRUE)
+      tmp.count[is.na(tmp.count)] <- 0
+      tmp.count <- subset(tmp.count, tmp.count$name %in% c(sample1, sample2))
+      if (nrow(subset(tmp.count, tmp.count$count <= 3)) != 0){
+        tmp.diff.markers <- data.frame(status = sprintf("Cannot conduct DE test, not enough cells in sample %s", subset(tmp.count, tmp.count$count <= 3)$name))
+      } else {
+          tmp.diff.markers <- FindMarkers(object = tmp.subset.s.obj, assay = "RNA", test.use = "wilcox", ident.1 = sample1, ident.2 = sample2, group.by = "name") %>% subset(p_val_adj <= 0.05) %>% rownames_to_column("Gene")  
+      }
+    } else {
+      tmp.diff.markers <- data.frame(status = sprintf("Cannot conduct DE test, not enough cells in samples, %s: %s, %s: %s ", sample1, count.sample1, sample2, count.sample2))
+    }
+
+    all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]][cluster.id] <- tmp.diff.markers    
+  }
+  saveRDS(all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]], file.path(path.to.01.output, sprintf("diff_markers_%s_vs_%s.rds", sample1, sample2)))
+} else {
+  all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]] <- readRDS(file.path(path.to.01.output, sprintf("diff_markers_%s_vs_%s.rds", sample1, sample2)))
+}
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+diff.markers <- all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]]
+```
+
+### Tables {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10, include=FALSE}
+diff.markers$`0` %>% create_dt()
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (cluster.id in all.cluster.ids){
+  tmp.table <- diff.markers[[cluster.id]] %>% mutate_if(is.numeric, round, 6)
+  cat(paste("\n\n#### Cluster: ", cluster.id, "##\n"))
+  print( htmltools::tagList(datatable(tmp.table, extensions = 'Buttons',
+                                      filter = "top",
+                                      options = list(dom = 'Blfrtip',
+                                                     buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                     lengthMenu = list(c(10,25,50,-1),
+                                                                       c(10,25,50,"All")),
+                                                     columnDefs = list(list(
+                                                       targets = "_all",
+                                                       render = JS(
+                                                         "function(data, type, row, meta) {",
+                                                         "return type === 'display' && data != null && data.length > 100 ?",
+                                                         "'<span title=\"' + data + '\">' + data.substr(0, 100) + '...</span>' : data;",
+                                                         "}")
+                                                     ))
+                                      ))))
+  cat("\n \n")  
+}
+```
+
+### Violin plot {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=28, fig.height=20}
+for (cluster.id in names(diff.markers)){
+  DefaultAssay(s.obj) <- "RNA"
+  cat(sprintf("#### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- diff.markers[[cluster.id]] 
+  if (nrow(tmp.cluster.markers) != 0 & "status" %in% colnames(tmp.cluster.markers) == FALSE){
+    tmp.cluster.markers <- tmp.cluster.markers %>% rowwise() %>% mutate(abs.avg_log2FC = abs(avg_log2FC)) %>% arrange(desc(abs.avg_log2FC))
+    Idents(s.obj) <- "name"
+    p <- VlnPlot(object = subset(s.obj, seurat_clusters == cluster.id & name %in% c(sample1, sample2)), features = head(tmp.cluster.markers, 9)$Gene)      
+  } else {
+    p <- ggplot() + ggtitle("No gene to plot")
+  }
+
+  print(p)
+  cat("\n \n")
+}
+```
+
+### Dotplot {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (cluster.id in names(diff.markers)){
+  DefaultAssay(s.obj) <- "RNA"
+  cat(sprintf("#### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- diff.markers[[cluster.id]] 
+  if (nrow(tmp.cluster.markers) != 0 & "status" %in% colnames(tmp.cluster.markers) == FALSE){
+    tmp.cluster.markers <- tmp.cluster.markers %>% rowwise() %>% mutate(abs.avg_log2FC = abs(avg_log2FC)) %>% arrange(desc(abs.avg_log2FC))
+    Idents(s.obj) <- "name"
+    p <- DotPlot(object = subset(s.obj, seurat_clusters == cluster.id & name %in% c(sample1, sample2)), features = head(tmp.cluster.markers, 9)$Gene)      
+  } else {
+    p <- ggplot() + ggtitle("No gene to plot")
+  }
+
+  print(p)
+  cat("\n \n")
+}
+```
+
+## ctrl_gut_myeloid vs treated_gut_myeloid
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+sample1 <- "treated_gut_myeloid"
+sample2 <- "ctrl_gut_myeloid"
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+
+if (file.exists(file.path(path.to.01.output, sprintf("diff_markers_%s_vs_%s.rds", sample1, sample2))) == FALSE){
+  all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]] <- hash()
+  
+  for (cluster.id in unique(s.obj$seurat_clusters)){
+    count.sample1 <- cell.count.in.clusters[, c("Var1", cluster.id)] %>% subset(Var1 == sample1)
+    count.sample1 <- count.sample1[[cluster.id]]
+    
+    count.sample2 <- cell.count.in.clusters[, c("Var1", cluster.id)] %>% subset(Var1 == sample2)
+    count.sample2 <- count.sample2[[cluster.id]]
+    if (count.sample1 != 0 & count.sample2 != 0){
+          tmp.subset.s.obj <- subset(s.obj, seurat_clusters == cluster.id & name %in% c(sample1, sample2))
+      tmp.count <- table(tmp.subset.s.obj$name) %>% as.data.frame()
+      colnames(tmp.count) <- c("name", "count")
+      tmp.count <- merge(data.frame(name = unique(tmp.subset.s.obj$name)), tmp.count, by.x = "name", by.y = "name", all.x = TRUE)
+      tmp.count[is.na(tmp.count)] <- 0
+      tmp.count <- subset(tmp.count, tmp.count$name %in% c(sample1, sample2))
+      if (nrow(subset(tmp.count, tmp.count$count <= 3)) != 0){
+        tmp.diff.markers <- data.frame(status = sprintf("Cannot conduct DE test, not enough cells in sample %s", subset(tmp.count, tmp.count$count <= 3)$name))
+      } else {
+          tmp.diff.markers <- FindMarkers(object = tmp.subset.s.obj, assay = "RNA", test.use = "wilcox", ident.1 = sample1, ident.2 = sample2, group.by = "name") %>% subset(p_val_adj <= 0.05) %>% rownames_to_column("Gene")  
+      }
+    } else {
+      tmp.diff.markers <- data.frame(status = sprintf("Cannot conduct DE test, not enough cells in samples, %s: %s, %s: %s ", sample1, count.sample1, sample2, count.sample2))
+    }
+
+    all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]][cluster.id] <- tmp.diff.markers    
+  }
+  saveRDS(all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]], file.path(path.to.01.output, sprintf("diff_markers_%s_vs_%s.rds", sample1, sample2)))
+} else {
+  all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]] <- readRDS(file.path(path.to.01.output, sprintf("diff_markers_%s_vs_%s.rds", sample1, sample2)))
+}
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+diff.markers <- all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]]
+```
+
+### Tables {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10, include=FALSE}
+diff.markers$`0` %>% create_dt()
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (cluster.id in all.cluster.ids){
+  tmp.table <- diff.markers[[cluster.id]] %>% mutate_if(is.numeric, round, 6)
+  cat(paste("\n\n#### Cluster: ", cluster.id, "##\n"))
+  print( htmltools::tagList(datatable(tmp.table, extensions = 'Buttons',
+                                      filter = "top",
+                                      options = list(dom = 'Blfrtip',
+                                                     buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                     lengthMenu = list(c(10,25,50,-1),
+                                                                       c(10,25,50,"All")),
+                                                     columnDefs = list(list(
+                                                       targets = "_all",
+                                                       render = JS(
+                                                         "function(data, type, row, meta) {",
+                                                         "return type === 'display' && data != null && data.length > 100 ?",
+                                                         "'<span title=\"' + data + '\">' + data.substr(0, 100) + '...</span>' : data;",
+                                                         "}")
+                                                     ))
+                                      ))))
+  cat("\n \n")  
+}
+```
+
+### Violin plot {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=28, fig.height=20}
+for (cluster.id in names(diff.markers)){
+  DefaultAssay(s.obj) <- "RNA"
+  cat(sprintf("#### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- diff.markers[[cluster.id]] 
+  if (nrow(tmp.cluster.markers) != 0 & "status" %in% colnames(tmp.cluster.markers) == FALSE){
+    tmp.cluster.markers <- tmp.cluster.markers %>% rowwise() %>% mutate(abs.avg_log2FC = abs(avg_log2FC)) %>% arrange(desc(abs.avg_log2FC))
+    Idents(s.obj) <- "name"
+    p <- VlnPlot(object = subset(s.obj, seurat_clusters == cluster.id & name %in% c(sample1, sample2)), features = head(tmp.cluster.markers, 9)$Gene)      
+  } else {
+    p <- ggplot() + ggtitle("No gene to plot")
+  }
+
+  print(p)
+  cat("\n \n")
+}
+```
+
+### Dotplot {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (cluster.id in names(diff.markers)){
+  DefaultAssay(s.obj) <- "RNA"
+  cat(sprintf("#### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- diff.markers[[cluster.id]] 
+  if (nrow(tmp.cluster.markers) != 0 & "status" %in% colnames(tmp.cluster.markers) == FALSE){
+    tmp.cluster.markers <- tmp.cluster.markers %>% rowwise() %>% mutate(abs.avg_log2FC = abs(avg_log2FC)) %>% arrange(desc(abs.avg_log2FC))
+    Idents(s.obj) <- "name"
+    p <- DotPlot(object = subset(s.obj, seurat_clusters == cluster.id & name %in% c(sample1, sample2)), features = head(tmp.cluster.markers, 9)$Gene)      
+  } else {
+    p <- ggplot() + ggtitle("No gene to plot")
+  }
+
+  print(p)
+  cat("\n \n")
+}
+```
+
+
+## ctrl_liver_myeloid vs treated_liver_myeloid
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+sample1 <- "treated_liver_myeloid"
+sample2 <- "ctrl_liver_myeloid"
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+if (file.exists(file.path(path.to.01.output, sprintf("diff_markers_%s_vs_%s.rds", sample1, sample2))) == FALSE){
+  all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]] <- hash()
+  
+  for (cluster.id in unique(s.obj$seurat_clusters)){
+    count.sample1 <- cell.count.in.clusters[, c("Var1", cluster.id)] %>% subset(Var1 == sample1)
+    count.sample1 <- count.sample1[[cluster.id]]
+    
+    count.sample2 <- cell.count.in.clusters[, c("Var1", cluster.id)] %>% subset(Var1 == sample2)
+    count.sample2 <- count.sample2[[cluster.id]]
+    if (count.sample1 != 0 & count.sample2 != 0){
+          tmp.subset.s.obj <- subset(s.obj, seurat_clusters == cluster.id & name %in% c(sample1, sample2))
+      tmp.count <- table(tmp.subset.s.obj$name) %>% as.data.frame()
+      colnames(tmp.count) <- c("name", "count")
+      tmp.count <- merge(data.frame(name = unique(tmp.subset.s.obj$name)), tmp.count, by.x = "name", by.y = "name", all.x = TRUE)
+      tmp.count[is.na(tmp.count)] <- 0
+      tmp.count <- subset(tmp.count, tmp.count$name %in% c(sample1, sample2))
+      if (nrow(subset(tmp.count, tmp.count$count <= 3)) != 0){
+        tmp.diff.markers <- data.frame(status = sprintf("Cannot conduct DE test, not enough cells in sample %s", subset(tmp.count, tmp.count$count <= 3)$name))
+      } else {
+          tmp.diff.markers <- FindMarkers(object = tmp.subset.s.obj, assay = "RNA", test.use = "wilcox", ident.1 = sample1, ident.2 = sample2, group.by = "name") %>% subset(p_val_adj <= 0.05) %>% rownames_to_column("Gene")  
+      }
+    } else {
+      tmp.diff.markers <- data.frame(status = sprintf("Cannot conduct DE test, not enough cells in samples, %s: %s, %s: %s ", sample1, count.sample1, sample2, count.sample2))
+    }
+
+    all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]][cluster.id] <- tmp.diff.markers    
+  }
+  saveRDS(all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]], file.path(path.to.01.output, sprintf("diff_markers_%s_vs_%s.rds", sample1, sample2)))
+} else {
+  all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]] <- readRDS(file.path(path.to.01.output, sprintf("diff_markers_%s_vs_%s.rds", sample1, sample2)))
+}
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+diff.markers <- all.diff.markers[[sprintf("%s_vs_%s", sample1, sample2)]]
+```
+
+### Tables {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10, include=FALSE}
+diff.markers$`0` %>% create_dt()
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (cluster.id in all.cluster.ids){
+  tmp.table <- diff.markers[[cluster.id]] %>% mutate_if(is.numeric, round, 6)
+  cat(paste("\n\n#### Cluster: ", cluster.id, "##\n"))
+  print( htmltools::tagList(datatable(tmp.table, extensions = 'Buttons',
+                                      filter = "top",
+                                      options = list(dom = 'Blfrtip',
+                                                     buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                     lengthMenu = list(c(10,25,50,-1),
+                                                                       c(10,25,50,"All")),
+                                                     columnDefs = list(list(
+                                                       targets = "_all",
+                                                       render = JS(
+                                                         "function(data, type, row, meta) {",
+                                                         "return type === 'display' && data != null && data.length > 100 ?",
+                                                         "'<span title=\"' + data + '\">' + data.substr(0, 100) + '...</span>' : data;",
+                                                         "}")
+                                                     ))
+                                      ))))
+  cat("\n \n")  
+}
+```
+
+### Violin plot {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=28, fig.height=20}
+for (cluster.id in names(diff.markers)){
+  DefaultAssay(s.obj) <- "RNA"
+  cat(sprintf("#### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- diff.markers[[cluster.id]] 
+  if (nrow(tmp.cluster.markers) != 0 & "status" %in% colnames(tmp.cluster.markers) == FALSE){
+    tmp.cluster.markers <- tmp.cluster.markers %>% rowwise() %>% mutate(abs.avg_log2FC = abs(avg_log2FC)) %>% arrange(desc(abs.avg_log2FC))
+    Idents(s.obj) <- "name"
+    p <- VlnPlot(object = subset(s.obj, seurat_clusters == cluster.id & name %in% c(sample1, sample2)), features = head(tmp.cluster.markers, 9)$Gene)      
+  } else {
+    p <- ggplot() + ggtitle("No gene to plot")
+  }
+
+  print(p)
+  cat("\n \n")
+}
+```
+
+### Dotplot {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (cluster.id in names(diff.markers)){
+  DefaultAssay(s.obj) <- "RNA"
+  cat(sprintf("#### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- diff.markers[[cluster.id]] 
+  if (nrow(tmp.cluster.markers) != 0 & "status" %in% colnames(tmp.cluster.markers) == FALSE){
+    tmp.cluster.markers <- tmp.cluster.markers %>% rowwise() %>% mutate(abs.avg_log2FC = abs(avg_log2FC)) %>% arrange(desc(abs.avg_log2FC))
+    Idents(s.obj) <- "name"
+    p <- DotPlot(object = subset(s.obj, seurat_clusters == cluster.id & name %in% c(sample1, sample2)), features = head(tmp.cluster.markers, 9)$Gene)      
+  } else {
+    p <- ggplot() + ggtitle("No gene to plot")
+  }
+
+  print(p)
+  cat("\n \n")
+}
+```

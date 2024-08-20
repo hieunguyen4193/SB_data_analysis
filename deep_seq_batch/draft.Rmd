@@ -1,0 +1,144 @@
+---
+title: "Cell interaction analysis"
+author:
+  - "trnguyen@ukaachen.de"
+date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    keep_md: no
+    df_print: paged
+    toc: true
+    toc_float:
+      toc_collapsed: false
+    toc_depth: 3
+    number_sections: true
+    theme: lumen
+---
+  
+  
+  ```{css zoom-lib-src, echo = FALSE}
+script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+```
+
+```{js zoom-jquery, echo = FALSE}
+$(document).ready(function() {
+  $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+  // onClick function for all plots (img's)
+    $('img:not(.zoomImg)').click(function() {
+      $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+      $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
+    });
+    // onClick function for zoomImg
+    $('img.zoomImg').click(function() {
+      $('.zoomDiv').css({opacity: '0', width: '0%'}); 
+    });
+  });
+```
+
+<style type="text/css">
+    div.datatables { height: auto !important;}
+</style>
+
+**Note on the .html report: Click on the image to zoom-in and one more click to go back to the original**
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.height=10, fig.width=18}
+##### clean up #####
+gc()
+rm(list = ls())
+
+path.to.pipeline.src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline/processes_src"
+path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"
+
+source(file.path(path.to.project.src, "00_import_libraries.R"))
+source(file.path(path.to.project.src, "00_helper_functions.R"))
+source(file.path(path.to.pipeline.src, "s8_integration_and_clustering.R"))
+
+#####----------------------------------------------------------------------#####
+# CONFIGURATIONS AND PREPRATIONS
+#####----------------------------------------------------------------------#####
+outdir <- "/home/hieunguyen/CRC1382/outdir"
+PROJECT <- "SBharadwaj_20240318"
+
+path.to.main.input <- file.path(outdir, PROJECT)
+s.obj.raw <- readRDS(file.path(path.to.main.input, "s1_output", sprintf("%s.output.s1.rds", PROJECT) ))
+s.obj <- readRDS(file.path(path.to.main.input, "s8_output", sprintf("%s.output.s8.rds", PROJECT)))
+s.obj <- subset(s.obj, Doublet_classifications == "Singlet")
+
+path.to.main.output <- file.path(path.to.main.input, "data_analysis")
+dir.create(path.to.main.output, showWarnings = FALSE, recursive = TRUE)
+
+path.to.01.output <- file.path(path.to.main.output, "01_output")
+path.to.02.output <- file.path(path.to.main.output, "02_output")
+dir.create(path.to.02.output, showWarnings = FALSE, recursive = TRUE)
+
+##### Define sub population based on gene expression
+cells <- hash()
+for (input.gene in c("Ciita", "Foxp3", "Klrg1", "Gata3")){
+  tmp <- GetAssayData(s.obj, assay = "RNA", slot = "data")[input.gene, ]  
+  cells[[input.gene]] <- tmp[tmp > 0] %>% names()
+}
+```
+
+# UMAP: 
+##  Selected cell populations based on gene expression {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
+for (input.gene in names(cells)){
+  cat(sprintf("## Gene: %s \n", input.gene))
+  p <- DimPlot(object = s.obj, cells.highlight = cells[[input.gene]], cols.highlight = "red", label = TRUE, label.box = TRUE, repel = TRUE) +
+    ggtitle(input.gene)
+  print(p)
+  cat("\n \n")
+}
+```
+
+## Group 1: Cells expressing Foxp3 and Klrg1 or Foxp3 and Gata3 
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
+group1.1 <- intersect(cells$Foxp3, cells$Klrg1)
+group1.2 <- intersect(cells$Foxp3, cells$Gata3)
+
+group1.cells <- unique(c(group1.1, group1.2))
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
+DimPlot(object = s.obj, cells.highlight = group1.cells, cols.highlight = "red", label = TRUE, label.box = TRUE, repel = TRUE)
+```
+
+## Re-clustering selected cells
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
+if (file.exists(file.path(path.to.02.output, "subset_data_based_on_Foxp3_Klrg1_Gata3_Ciita.rds")) == FALSE){
+  subset.s.obj <- subset(s.obj, cells = setdiff(c(group1.cells, cells$Ciita), intersect(group1.cells, cells$Ciita)))
+  DefaultAssay(subset.s.obj) <- "RNA"
+  
+  subset.s.obj <- DietSeurat(subset.s.obj)
+  
+  num.PCA <- 30
+  num.PC.used.in.UMAP <- 30
+  num.PC.used.in.Clustering <- 30
+  cluster.resolution <- 0.5
+  num.dim.integration <- 30
+  num.dim.cluster <- 30
+  
+  subset.s.obj <- ScaleData(subset.s.obj)
+  subset.s.obj <- s8.integration.and.clustering(subset.s.obj, 
+                             path.to.02.output, 
+                             FALSE,
+                             PROJECT, 
+                             num.dim.integration,
+                             num.PCA,
+                             num.PC.used.in.UMAP,
+                             num.PC.used.in.Clustering,
+                             cluster.resolution = cluster.resolution,
+                             my_random_seed = 42,
+                             umap.method = "uwot",
+                             genes.to.not.run.PCA = NULL,
+                             inte_pca_reduction_name = "INTE_PCA", 
+                             inte_umap_reduction_name = "INTE_UMAP",
+                             with.TSNE = FALSE,
+                             k.filter = 200)
+  
+  saveRDS(subset.s.obj, file.path(path.to.02.output, "subset_data_based_on_Foxp3_Klrg1_Gata3_Ciita.rds"))
+} else {
+  subset.s.obj <- readRDS(file.path(path.to.02.output, "subset_data_based_on_Foxp3_Klrg1_Gata3_Ciita.rds"))
+}
+
+```

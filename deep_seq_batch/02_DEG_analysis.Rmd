@@ -1,0 +1,256 @@
+---
+title: "Differential gene expression analysis, case `r params$PROJECT`"
+author:
+  - "trnguyen@ukaachen.de"
+date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    keep_md: no
+    df_print: paged
+    toc: true
+    toc_float:
+      toc_collapsed: false
+    toc_depth: 3
+    number_sections: true
+    theme: lumen
+params:
+  PROJECT: NA
+---
+  
+  
+```{css zoom-lib-src, echo = FALSE}
+script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+```
+
+```{js zoom-jquery, echo = FALSE}
+$(document).ready(function() {
+  $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+  // onClick function for all plots (img's)
+    $('img:not(.zoomImg)').click(function() {
+      $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+      $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
+    });
+    // onClick function for zoomImg
+    $('img.zoomImg').click(function() {
+      $('.zoomDiv').css({opacity: '0', width: '0%'}); 
+    });
+  });
+```
+
+<style type="text/css">
+    div.datatables { height: auto !important;}
+</style>
+
+**Note on the .html report: Click on the image to zoom-in and one more click to go back to the original**
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.height=10, fig.width=18}
+##### clean up #####
+# gc()
+# rm(list = ls())
+
+path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"
+
+source(file.path(path.to.project.src, "00_import_libraries.R"))
+source(file.path(path.to.project.src, "00_helper_functions.R"))
+
+#####----------------------------------------------------------------------#####
+# CONFIGURATIONS AND PREPRATIONS
+#####----------------------------------------------------------------------#####
+outdir <- "/home/hieunguyen/CRC1382/outdir"
+PROJECT <- params$PROJECT
+# PROJECT <- "SBharadwaj_20240318_Sample_1_4"
+
+path.to.main.input <- file.path(outdir, "SeuratV5", PROJECT)
+path.to.main.output <- file.path(path.to.main.input, "data_analysis")
+dir.create(path.to.main.output, showWarnings = FALSE, recursive = TRUE)
+
+path.to.01.output <- file.path(path.to.main.output, "01_output")
+path.to.02.output <- file.path(path.to.main.output, "02_output")
+dir.create(path.to.02.output, showWarnings = FALSE, recursive = TRUE)
+
+s.obj <- readRDS(file.path(path.to.01.output,sprintf("Project_%s.rds", PROJECT)))
+
+meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>% rowwise() %>%
+  mutate(condition = str_split(name, "_")[[1]][[1]]) %>%
+  mutate(organ = str_split(name, "_")[[1]][[2]]) %>%
+  mutate(celltype = str_split(name, "_")[[1]][[3]])  %>% 
+  column_to_rownames("barcode")
+
+meta.data <- meta.data[row.names(s.obj@meta.data),]
+
+s.obj <- AddMetaData(object = s.obj, metadata = meta.data$condition, col.name = "condition")
+s.obj <- AddMetaData(object = s.obj, metadata = meta.data$organ, col.name = "organ")
+s.obj <- AddMetaData(object = s.obj, metadata = meta.data$celltype, col.name = "celltype")
+
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
+DimPlot(objec = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, repel = TRUE, group.by = "prediction2")
+```
+
+# UMAP: expression of some genes
+
+## All samples in integrated UMAP {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+Idents(s.obj) <- "cca.cluster.0.5"
+FeaturePlot(s.obj, features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), label = TRUE)
+```
+
+## Each sample in integrated UMAP {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+Idents(s.obj) <- "cca.cluster.0.5"
+for (sample.id in unique(s.obj$name)){
+  cat(sprintf("### Sample %s \n", sample.id))
+  p <- FeaturePlot(subset(s.obj, name == sample.id), features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), label = TRUE)  
+  print(p)
+  cat("\n \n")
+}
+```
+
+# Differential gene expresison analysis
+we perform differential gene expression analysis for each cluster between the two conditions
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
+condition1 <- unique(s.obj$condition)[[1]]
+condition2 <- unique(s.obj$condition)[[2]]
+print(sprintf("Condition 1: %s", condition1))
+print(sprintf("Condition 2: %s", condition2))
+
+print(sprintf("Positive logFC indicates that the gene is higher in condition %s", condition1))
+print("\n")
+print(sprintf("Negative logFC indicates that the gene is higher in condition %s", condition2))
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
+all.cluster.ids <- as.numeric(unique(s.obj$cca.cluster.0.5)) %>% sort()
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
+s.obj <- PrepSCTFindMarkers(s.obj)
+if (file.exists(file.path(path.to.02.output, "all.diff.markers.rds")) == FALSE){
+  all.diff.markers <- hash()
+  cell.count.in.clusters <- table(s.obj$condition, s.obj$cca.cluster.0.5) %>% as.data.frame() %>%
+    pivot_wider(names_from = "Var2", values_from = "Freq")
+  for (cluster.id in unique(s.obj$cca.cluster.0.5)){
+      count.condition1 <- cell.count.in.clusters[, c("Var1", cluster.id)] %>% subset(Var1 == condition1)
+      count.condition1 <- count.condition1[[cluster.id]]
+      
+      count.condition2 <- cell.count.in.clusters[, c("Var1", cluster.id)] %>% subset(Var1 == condition2)
+      count.condition2 <- count.condition2[[cluster.id]]
+      if (count.condition1 != 0 & count.condition2 != 0){
+        ##### subset the main seurat object to take only the cluster of interest
+        tmp.subset.s.obj <- subset(s.obj, cca.cluster.0.5 == cluster.id & condition %in% c(condition1, condition2))
+        
+        tmp.count <- table(tmp.subset.s.obj$condition) %>% as.data.frame()
+        colnames(tmp.count) <- c("condition", "count")
+        tmp.count <- merge(data.frame(condition = unique(tmp.subset.s.obj$condition)), tmp.count, by.x = "condition", by.y = "condition", all.x = TRUE)
+        tmp.count[is.na(tmp.count)] <- 0
+        tmp.count <- subset(tmp.count, tmp.count$condition %in% c(condition1, condition2))
+        if (nrow(subset(tmp.count, tmp.count$count <= 3)) != 0){
+          tmp.diff.markers <- data.frame(status = sprintf("Cannot conduct DE test, not enough cells in sample %s", subset(tmp.count, tmp.count$count <= 3)$condition))
+        } else {
+          tmp.diff.markers <- FindMarkers(object = tmp.subset.s.obj, 
+                                          assay = "SCT",
+                                          slot = "data",
+                                          test.use = "wilcox",
+                                          ident.1 = condition1,
+                                          ident.2 = condition2,
+                                          group.by = "condition",
+                                          min.pct = 0.25,
+                                          recorrect_umi = FALSE) %>% subset(p_val_adj <= 0.05) %>% rownames_to_column("Gene")  
+        }
+      } else {
+        tmp.diff.markers <- data.frame(status = sprintf("Cannot conduct DE test, not enough cells in samples, %s: %s, %s: %s ", condition1, count.condition1, condition2, count.condition2))
+      }
+      all.diff.markers[[sprintf("cluster%s", cluster.id)]] <- tmp.diff.markers
+  }
+  saveRDS(all.diff.markers, file.path(path.to.02.output, "all.diff.markers.rds"))
+} else {
+  all.diff.markers <- readRDS(file.path(path.to.02.output, "all.diff.markers.rds"))
+}
+
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+diff.markers <- all.diff.markers
+```
+
+## Tables {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10, include=FALSE}
+diff.markers$`0` %>% create_dt()
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (cluster.id in all.cluster.ids){
+  if (sprintf("cluster%s", cluster.id) %in% names(diff.markers)){
+    tmp.table <- diff.markers[[sprintf("cluster%s", cluster.id)]] %>% mutate_if(is.numeric, round, 6)    
+  } else {
+    tmp.table <- data.frame(status = c("No DE gene found!"))
+  }
+
+  cat(paste("\n\n### Cluster: ", cluster.id, "##\n"))
+  print( htmltools::tagList(datatable(tmp.table, extensions = 'Buttons',
+                                      filter = "top",
+                                      options = list(dom = 'Blfrtip',
+                                                     buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                     lengthMenu = list(c(10,25,50,-1),
+                                                                       c(10,25,50,"All")),
+                                                     columnDefs = list(list(
+                                                       targets = "_all",
+                                                       render = JS(
+                                                         "function(data, type, row, meta) {",
+                                                         "return type === 'display' && data != null && data.length > 100 ?",
+                                                         "'<span title=\"' + data + '\">' + data.substr(0, 100) + '...</span>' : data;",
+                                                         "}")
+                                                     ))
+                                      ))))
+  cat("\n \n")  
+}
+```
+
+## Violin plot {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=28, fig.height=20}
+for (cluster.id in all.cluster.ids){
+  DefaultAssay(s.obj) <- "RNA"
+  cat(sprintf("### Cluster %s \n", cluster.id))
+  if (sprintf("cluster%s", cluster.id) %in% names(diff.markers)){
+    tmp.cluster.markers <- diff.markers[[sprintf("cluster%s", cluster.id)]] 
+    if (nrow(tmp.cluster.markers) != 0 & "status" %in% colnames(tmp.cluster.markers) == FALSE){
+      tmp.cluster.markers <- tmp.cluster.markers %>% rowwise() %>% mutate(abs.avg_log2FC = abs(avg_log2FC)) %>% arrange(desc(abs.avg_log2FC))
+      Idents(s.obj) <- "name"
+      p <- VlnPlot(object = subset(s.obj, cca.cluster.0.5 == cluster.id & condition %in% c(condition1, condition2)), features = head(tmp.cluster.markers, 9)$Gene)      
+    } else {
+      p <- ggplot() + ggtitle("No gene to plot")
+    }    
+  } else {
+    p <- ggplot() + ggtitle("No gene to plot")
+  }
+  print(p)
+  cat("\n \n")
+}
+```
+
+## Dotplot {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (cluster.id in all.cluster.ids){
+  DefaultAssay(s.obj) <- "RNA"
+  cat(sprintf("### Cluster %s \n", cluster.id))
+  if (sprintf("cluster%s", cluster.id) %in% names(diff.markers)){
+    tmp.cluster.markers <- diff.markers[[sprintf("cluster%s", cluster.id)]] 
+    if (nrow(tmp.cluster.markers) != 0 & "status" %in% colnames(tmp.cluster.markers) == FALSE){
+      tmp.cluster.markers <- tmp.cluster.markers %>% rowwise() %>% mutate(abs.avg_log2FC = abs(avg_log2FC)) %>% arrange(desc(abs.avg_log2FC))
+      Idents(s.obj) <- "name"
+      p <- DotPlot(object = subset(s.obj, cca.cluster.0.5 == cluster.id & condition %in% c(condition1, condition2)), features = head(tmp.cluster.markers, 9)$Gene)      
+    } else {
+      p <- ggplot() + ggtitle("No gene to plot")
+    }    
+  } else {
+    p <- ggplot() + ggtitle("No gene to plot")
+  }
+  print(p)
+  cat("\n \n")
+}
+```

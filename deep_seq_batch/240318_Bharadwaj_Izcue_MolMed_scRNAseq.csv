@@ -1,0 +1,9 @@
+Lane,Sample,Index
+*,ctrl_gut_CD45,SI-TT-D1
+*,ctrl_gut_myeloid,SI-TT-D2
+*,ctrl_liver_myeloid,SI-TT-D3
+*,treated_gut_CD45,SI-TT-D4
+*,treated_gut_myeloid,SI-TT-D5
+*,treated_liver_myeloid,SI-TT-D6
+*,treated_gut_CD45,SI-TT-D7
+*,ctrl_gut_CD45,SI-TT-D8
