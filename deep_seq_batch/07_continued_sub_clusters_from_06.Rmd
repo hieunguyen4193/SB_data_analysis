@@ -82,10 +82,10 @@ cont.sub.cluster.idx <- params$cont.sub.cluster.idx
 
 path.to.main.input <- file.path(outdir, "SeuratV5", PROJECT)
 path.to.main.output <- file.path(path.to.main.input, "data_analysis")
-path.to.07.output <- file.path(path.to.main.output, "07_output", sub.cluster.idx)
+path.to.07.output <- file.path(path.to.main.output, "07_output", sub.cluster.idx, cont.sub.cluster.idx)
 dir.create(path.to.07.output, showWarnings = FALSE, recursive = TRUE)
 
-s.obj <- readRDS(file.path(path.to.07.output, cont.sub.cluster.idx, "s8_output", sprintf("%s.output.s8.rds", PROJECT)))
+s.obj <- readRDS(file.path(path.to.07.output, "s8_output", sprintf("%s.output.s8.rds", PROJECT)))
 
 ```
 
