@@ -50,6 +50,7 @@ for (cont.sub.cluster.idx in names(sub_clusters[[PROJECT]][[sub.cluster.idx]])){
                                                        num.PC.used.in.Clustering = num.PC.used.in.Clustering,
                                                        cluster.resolution = cluster.resolution,
                                                        vars.to.regress = vars.to.regress,
-                                                       integration.methods = "CCA") 
+                                                       integration.methods = "CCA",
+                                                       PROJECT = sprintf("%s_%s", PROJECT, cont.sub.cluster.idx)) 
 }
  

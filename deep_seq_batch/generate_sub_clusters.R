@@ -13,7 +13,9 @@ source(file.path(scrna_pipeline_src, "s8_integration_and_clustering_SeuratV5.R")
 # CONFIGURATIONS AND PREPRATIONS
 #####----------------------------------------------------------------------#####
 outdir <- "/home/hieunguyen/CRC1382/outdir"
-PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8_2_5"
+PROJECT <- "SBharadwaj_20240318_Sample_3_6"
+# PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8_2_5"
+
 sub.cluster.idx <- "v0.1"
 
 path.to.main.input <- file.path(outdir, "SeuratV5", PROJECT)

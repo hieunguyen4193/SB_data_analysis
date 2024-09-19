@@ -84,7 +84,6 @@ dir.create(path.to.06.output, showWarnings = FALSE, recursive = TRUE)
 path.to.save.subclusters <- file.path(path.to.main.output, "sub_clusters", sub.cluster.idx)
 
 s.obj <- readRDS(file.path(path.to.save.subclusters, "s8_output", sprintf("%s.output.s8.rds", PROJECT)))
-
 ```
 
 # Dimension reduction with UMAP
