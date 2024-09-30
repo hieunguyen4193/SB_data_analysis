@@ -363,10 +363,10 @@ for (sample.id in unique(s.obj$name)){
 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-if (file.exists(file.path(path.to.07.output,sprintf("Project_%s_%s.rds", PROJECT, sub.cluster.idx))) == FALSE){
-  saveRDS(s.obj, file.path(path.to.07.output,sprintf("Project_%s_%s.rds", PROJECT, sub.cluster.idx)))  
+if (file.exists(file.path(path.to.07.output,sprintf("Project_%s_%s_%s.rds", PROJECT, sub.cluster.idx, cont.sub.cluster.idx))) == FALSE){
+  saveRDS(s.obj, file.path(path.to.07.output,sprintf("Project_%s_%s_%s.rds", PROJECT, sub.cluster.idx, cont.sub.cluster.idx)))  
 } else {
-  s.obj <- readRDS(file.path(path.to.07.output,sprintf("Project_%s_%s.rds", PROJECT, sub.cluster.idx)))
+  s.obj <- readRDS(file.path(path.to.07.output,sprintf("Project_%s_%s_%s.rds", PROJECT, sub.cluster.idx, cont.sub.cluster.idx)))
 }
 ```
 
@@ -377,15 +377,19 @@ if ("loupeR" %in% installed.packages() == FALSE){
   install.packages("/media/hieunguyen/HD01/storage/offline_pkgs/loupeR_Linux.tar.gz", repos = NULL, type = "source")
 }
 
-if (file.exists(file.path(path.to.07.output, sprintf("PROJECT_%s_%s_cloupe_converted_from_seurat", PROJECT, 
-                          sub.cluster.idx))) == FALSE){
+if (file.exists(file.path(path.to.07.output, sprintf("%s_%s_%s", 
+                                                     PROJECT,
+                                                     sub.cluster.idx,
+                                                     cont.sub.cluster.idx))) == FALSE){
   library(loupeR)
   loupeR::setup()
   create_loupe_from_seurat(
       s.obj,
       output_dir = file.path(path.to.07.output),
-      output_name = sprintf("PROJECT_%s_%s_cloupe_converted_from_seurat", PROJECT, 
-                            sub.cluster.idx),
+      output_name = sprintf("%s_%s_%s", 
+                            PROJECT, 
+                            sub.cluster.idx,
+                            cont.sub.cluster.idx),
       dedup_clusters = FALSE,
       executable_path = NULL,
       force = TRUE)  

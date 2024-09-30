@@ -23,7 +23,7 @@ path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch
 #                   "SBharadwaj_20240318_Sample_2_3_5_6",
 #                   "SBharadwaj_20240318_Sample_1_4_7_8_2_5")
 
-all.PROJECTS <- c("SBharadwaj_20240318_Sample_1_4_7_8_2_5")
+all.PROJECTS <- c("SBharadwaj_20240318_Sample_3_6")
 
 for (PROJECT in all.PROJECTS){
   path.to.html.outputs <- file.path(outdir, "SeuratV5", PROJECT, "html_output")
@@ -62,7 +62,8 @@ path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch
 #                   "SBharadwaj_20240318_Sample_1_7",
 #                   "SBharadwaj_20240318_Sample_7_8",
 #                   "SBharadwaj_20240318_Sample_2_3_5_6")
-all.PROJECTS <- c("SBharadwaj_20240318_Sample_1_4_7_8_2_5")
+
+all.PROJECTS <- c("SBharadwaj_20240318_Sample_3_6")
 
 for (PROJECT in all.PROJECTS){
   path.to.html.outputs <- file.path(outdir, "SeuratV5" , PROJECT, "html_output")

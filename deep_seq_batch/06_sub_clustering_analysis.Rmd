@@ -15,6 +15,7 @@ output:
     theme: lumen
 params:
   PROJECT: NA
+  sub.cluster.idx: NA
 ---
   
   
@@ -70,11 +71,8 @@ source(file.path(scrna_pipeline_src, "s8_integration_and_clustering_SeuratV5.R")
 #####----------------------------------------------------------------------#####
 outdir <- "/home/hieunguyen/CRC1382/outdir"
 
-# PROJECT <- params$PROJECT
-# sub.cluster.idx <- params$sub.cluster.idx
-
-PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8_2_5"
-sub.cluster.idx <- "v0.1"
+PROJECT <- params$PROJECT
+sub.cluster.idx <- params$sub.cluster.idx
 
 path.to.main.input <- file.path(outdir, "SeuratV5", PROJECT)
 path.to.main.output <- file.path(path.to.main.input, "data_analysis")

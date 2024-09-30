@@ -10,10 +10,15 @@ outdir <- "/home/hieunguyen/CRC1382/outdir"
 
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"
 
-PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8_2_5"
-sub.cluster.idx <- "v0.1"
+# PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8_2_5"
+# sub.cluster.idx <- "v0.1"
+# list.continued.sub.clusters <- c("DC", "Monocyte_Macrophages")
 
-for (cont.sub.cluster.idx in c("DC", "Monocyte_Macrophages")){
+PROJECT <- "SBharadwaj_20240318_Sample_3_6"
+sub.cluster.idx <- "v0.1"
+list.continued.sub.clusters <- c("v0.1.1")
+
+for (cont.sub.cluster.idx in list.continued.sub.clusters){
   path.to.html.outputs <- file.path(outdir, "SeuratV5" , PROJECT, "html_output")
   dir.create(path.to.html.outputs, showWarnings = FALSE, recursive = TRUE)
   

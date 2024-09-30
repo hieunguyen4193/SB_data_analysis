@@ -48,4 +48,5 @@ s.obj.integrated <- s8.integration.and.clustering_V5(s.obj = s.obj,
                                                      num.PC.used.in.UMAP = num.PC.used.in.UMAP,
                                                      num.PC.used.in.Clustering = num.PC.used.in.Clustering,
                                                      cluster.resolution = cluster.resolution,
-                                                     vars.to.regress = vars.to.regress)  
+                                                     vars.to.regress = vars.to.regress,
+                                                     PROJECT = PROJECT)

@@ -58,8 +58,8 @@ source(file.path(path.to.project.src, "00_helper_functions.R"))
 #####----------------------------------------------------------------------#####
 outdir <- "/home/hieunguyen/CRC1382/outdir"
 # outdir <- "/media/hieunguyen/HD01/outdir/CRC1382"
-# PROJECT <- params$PROJECT
-PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8_2_5"
+PROJECT <- params$PROJECT
+# PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8_2_5"
 
 # path.to.main.input <- file.path(outdir, "SBharadwaj_20240318_merged_dupl_samples", PROJECT)
 

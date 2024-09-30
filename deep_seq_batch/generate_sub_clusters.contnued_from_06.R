@@ -14,7 +14,7 @@ source(file.path(path.to.project.src, "sub_clustering_indices.continued_from_06.
 # CONFIGURATIONS AND PREPRATIONS
 #####----------------------------------------------------------------------#####
 outdir <- "/home/hieunguyen/CRC1382/outdir"
-PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8_2_5"
+PROJECT <- "SBharadwaj_20240318_Sample_3_6"
 sub.cluster.idx <- "v0.1"
 
 for (cont.sub.cluster.idx in names(sub_clusters[[PROJECT]][[sub.cluster.idx]])){
