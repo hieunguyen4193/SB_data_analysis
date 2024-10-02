@@ -1,0 +1,436 @@
+---
+title: "Preliminary analysis, DCs clusters, extract Cd3g cells only"
+author:
+  - "trnguyen@ukaachen.de"
+date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    keep_md: no
+    df_print: paged
+    toc: true
+    toc_float:
+      toc_collapsed: false
+    toc_depth: 3
+    number_sections: true
+    theme: lumen
+params:
+  PROJECT: NA
+---
+  
+  
+```{css zoom-lib-src, echo = FALSE}
+script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+```
+
+```{js zoom-jquery, echo = FALSE}
+$(document).ready(function() {
+  $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+  // onClick function for all plots (img's)
+    $('img:not(.zoomImg)').click(function() {
+      $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+      $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
+    });
+    // onClick function for zoomImg
+    $('img.zoomImg').click(function() {
+      $('.zoomDiv').css({opacity: '0', width: '0%'}); 
+    });
+  });
+```
+
+<style type="text/css">
+    div.datatables { height: auto !important;}
+</style>
+
+**Note on the .html report: Click on the image to zoom-in and one more click to go back to the original**
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.height=10, fig.width=18}
+##### clean up #####
+# gc()
+# rm(list = ls())
+
+path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"
+
+source(file.path(path.to.project.src, "00_import_libraries.R"))
+source(file.path(path.to.project.src, "00_helper_functions.R"))
+
+#####----------------------------------------------------------------------#####
+# CONFIGURATIONS AND PREPRATIONS
+#####----------------------------------------------------------------------#####
+# outdir <- "/home/hieunguyen/CRC1382/outdir"
+outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5"
+PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8_2_5"
+
+path.to.main.input <- file.path(outdir, PROJECT)
+
+path.to.main.output <- file.path(path.to.main.input, "data_analysis")
+dir.create(path.to.main.output, showWarnings = FALSE, recursive = TRUE)
+
+path.to.01.output <- file.path(path.to.main.output, "01_output", "custom_output", "DCs_Cd3g")
+dir.create(path.to.01.output, showWarnings = FALSE, recursive = TRUE)
+
+path.to.07.output <- file.path(path.to.main.output, "07_output")
+
+path.to.s.obj <- file.path(path.to.07.output, "v0.1", "DC", "s8_output/SBharadwaj_20240318_Sample_1_4_7_8_2_5_DC.output.s8.rds")
+
+s.obj <- readRDS(path.to.s.obj)
+
+Cd3g.cells <- GetAssayData(object = s.obj, assay = "SCT", slot = "data")["Cd3g", ]
+
+keep.cells <- Cd3g.cells[Cd3g.cells > 0] %>% names()
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=18}
+DimPlot(object = s.obj, reduction = "cca_UMAP", cells.highlight = keep.cells, label = TRUE, label.box = TRUE, repel = TRUE) +
+  theme(legend.position = "none") + 
+  ggtitle("UMAP: highlight cells expressing Cd3g")
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.height=10, fig.width=18}
+s.obj <- subset(s.obj, cells = keep.cells)
+
+if (file.exists(
+  file.path(path.to.01.output, "s8_output", sprintf("%s_DCs_Cd3g.output.s8.rds", PROJECT))
+) == FALSE){
+  scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline_SeuratV5/processes_src"
+  source(file.path(scrna_pipeline_src, "s8_integration_and_clustering_SeuratV5.R"))
+  
+  num.PCA <- 30
+  num.PC.used.in.UMAP <- 30
+  num.PC.used.in.Clustering <- 30
+  num.dim.integration <- 30
+  num.dim.cluster <- 30
+  cluster.resolution <- 0.5
+  use.sctransform <- TRUE
+  vars.to.regress <- c("percent.mt")
+  k.weight <- 50
+  
+  DefaultAssay(s.obj) <- "RNA"
+  s.obj <- JoinLayers(s.obj)
+  s.obj <- s8.integration.and.clustering_V5(
+     s.obj = s.obj, 
+     save.RDS.s8 = TRUE,
+     path.to.output = path.to.01.output,
+     use.sctransform = TRUE,
+     num.PCA = num.PCA,
+     num.PC.used.in.UMAP = num.PC.used.in.UMAP,
+     num.PC.used.in.Clustering = num.PC.used.in.Clustering,
+     cluster.resolution = cluster.resolution,
+     vars.to.regress = vars.to.regress,
+     PROJECT = sprintf("%s_DCs_Cd3g", PROJECT),
+     k.weight = k.weight)
+} else {
+  s.obj <- readRDS(file.path(path.to.01.output, "s8_output", sprintf("%s_DCs_Cd3g.output.s8.rds", PROJECT)))
+}
+
+
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.height=10, fig.width=18}
+Idents(s.obj) <- "cca.cluster.0.5"
+if (file.exists(file.path(path.to.01.output, "DE_cluster_marker_genes.rds")) == FALSE){
+  DefaultAssay(s.obj) <- "SCT"
+  s.obj <- PrepSCTFindMarkers(s.obj)
+  cluster.markers <- FindAllMarkers(object = s.obj, assay = "SCT", test.use = "wilcox", slot = "data", min.pct = 0.5)
+  cluster.markers <- subset(cluster.markers, cluster.markers$p_val_adj < 0.05 & cluster.markers$avg_log2FC > 0)
+  saveRDS(cluster.markers, file.path(path.to.01.output, "DE_cluster_marker_genes.rds"))
+} else {
+  cluster.markers <- readRDS(file.path(path.to.01.output, "DE_cluster_marker_genes.rds"))
+}
+
+```
+
+# Dimension reduction with UMAP
+
+## UMAP: all clusters 
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, label.size = 10, pt.size = 1, repel = TRUE, group.by = "cca.cluster.0.5") + 
+  ggtitle(sprintf("UMAP: All clusters")) +
+  theme(axis.text = element_text(size=20, face = "bold"),
+        axis.title = element_text(size=20, face = "bold"), 
+        title = element_text(size = 20, face = "bold"))
+```
+
+## UMAP: all samples
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, label.size = 10, pt.size = 1, repel = TRUE, group.by = "name") + 
+  ggtitle(sprintf("UMAP Sample: All samples after integrating")) +
+  theme(axis.text = element_text(size=20, face = "bold"),
+        axis.title = element_text(size=20, face = "bold"), 
+        title = element_text(size = 20, face = "bold"))
+```
+
+
+
+# Cluster marker genes
+
+Identify differentially expressed genes in each cluster. 
+
+## Feature plot {.tabset}
+```{r echo=FALSE, fig.height=12, fig.width=20, message=FALSE, warning=FALSE, results='asis'}
+for (cluster.id in sort(unique(cluster.markers$cluster))){
+  DefaultAssay(s.obj) <- "SCT"
+  cat(sprintf("### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  p <- FeaturePlot(object = s.obj, reduction = "cca_UMAP", features = head(tmp.cluster.markers, 9)$gene, ncol = 3, label = TRUE, pt.size = 0.5, label.size = 5, label.color = "red", slot = "data")  
+  print(p)
+  cat("\n \n")
+}
+```
+
+## Dot plot{.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+for (cluster.id in sort(unique(cluster.markers$cluster))){
+  DefaultAssay(s.obj) <- "SCT"
+  cat(sprintf("### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  p <- DotPlot(object = s.obj, features = head(tmp.cluster.markers, 9)$gene)  
+  print(p)
+  cat("\n \n")
+}
+```
+
+## Violin plot{.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+for (cluster.id in sort(unique(cluster.markers$cluster))){
+  DefaultAssay(s.obj) <- "SCT"
+  cat(sprintf("### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  p <- VlnPlot(object = s.obj, features = head(tmp.cluster.markers, 9)$gene, slot = "data")  
+  print(p)
+  cat("\n \n")
+}
+```
+
+## Full tables of DE genes {.tabset}
+```{r echo=FALSE, results='asis', include=FALSE}
+cluster.markers %>% create_dt()
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+all.cluster.ids <- sort(unique(s.obj$cca.cluster.0.5))
+for (cluster.id in all.cluster.ids){
+  tmp.table <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  cat(paste("\n\n### Cluster: ", cluster.id, "##\n"))
+  print( htmltools::tagList(datatable(tmp.table, extensions = 'Buttons',
+                                      filter = "top",
+                                      options = list(dom = 'Blfrtip',
+                                                     buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                     lengthMenu = list(c(10,25,50,-1),
+                                                                       c(10,25,50,"All")),
+                                                     columnDefs = list(list(
+                                                       targets = "_all",
+                                                       render = JS(
+                                                         "function(data, type, row, meta) {",
+                                                         "return type === 'display' && data != null && data.length > 100 ?",
+                                                         "'<span title=\"' + data + '\">' + data.substr(0, 100) + '...</span>' : data;",
+                                                         "}")
+                                                     ))
+                                      ))))
+  cat("\n \n")  
+}
+```
+
+# Number of cells in each cluster in each sample
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+cell.count.in.clusters <- table(s.obj$name, s.obj$cca.cluster.0.5) %>% as.data.frame() %>%
+  pivot_wider(names_from = "Var2", values_from = "Freq") 
+cell.count.in.clusters %>% create_dt()
+```
+
+# Cell type annotation by pathway analysis with CellMarkers 2.0
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+if (packageVersion("clusterProfiler") != "4.10.1"){
+  remove.packages("clusterProfiler")
+  remove.packages("DOSE")
+  remove.packages("GOSemSim")
+  path.to.install.dir <- "/media/hieunguyen/HD01/storage/offline_pkgs/clusterProfiler"
+  install.packages(file.path(path.to.install.dir, "HDO.db_0.99.1.tar.gz"), type = "source", repos = NULL)
+  install.packages(file.path(path.to.install.dir, "yulab.utils_0.1.4.tar.gz"), type = "source", repos = NULL)
+  install.packages(file.path(path.to.install.dir, "GOSemSim_2.28.1.tar.gz"), type = "source", repos = NULL)
+  install.packages(file.path(path.to.install.dir, "DOSE_3.28.2.tar.gz"), type = "source", repos = NULL) 
+  install.packages(file.path(path.to.install.dir, "gson_0.1.0.tar.gz"), type = "source", repos = NULL)
+  install.packages(file.path(path.to.install.dir, "clusterProfiler_4.10.1.tar.gz"), type = "source", repos = NULL) 
+}
+
+library(clusterProfiler)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+if ("org.Mm.eg.db" %in% installed.packages() == FALSE){
+  BiocManager::install("org.Mm.eg.db")
+}
+library("org.Mm.eg.db")
+
+annotate_with_pathway <- function(cluster.id, topN = 20){
+  if (topN == "all"){
+      tmpdf <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  } else {
+      tmpdf <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC)) %>% head(topN)    
+  }
+
+  path.to.cellmarker2.0 <- "/media/hieunguyen/HD01/storage/CellMarker2.0"
+  cell_marker_data <- readxl::read_excel(file.path(path.to.cellmarker2.0, "Cell_marker_Mouse.xlsx"))
+  
+  ## instead of `cellName`, users can use other features (e.g. `cancerType`)
+  cells <- cell_marker_data %>%
+      dplyr::select(cell_name, GeneID) %>%
+      dplyr::mutate(GeneID = strsplit(GeneID, ', ')) %>%
+      tidyr::unnest()
+  
+  convertdf <- bitr(tmpdf$gene, fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
+      
+  x <- enricher(convertdf$ENTREZID, TERM2GENE = cells) %>% 
+    as.data.frame() %>%
+    subset(p.adjust <= 0.05)
+  x <- x %>% subset(select = -c(geneID)) %>% arrange(desc(Count))
+  return(x)  
+}
+
+pathway.annotation <- hash()
+```
+
+## Result tables {.tabset}
+```{r echo=FALSE, results='asis', include=FALSE}
+annotate_with_pathway(1) %>% create_dt()
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+annotationdf <- data.frame()
+top5.annotationdf <- data.frame()
+
+available.diff.clusters <- unique(cluster.markers$cluster)
+
+for (cluster.id in all.cluster.ids){
+  if (cluster.id %in% available.diff.clusters == FALSE){
+    tmp.table <- data.frame(status = c("Cell type not detected!"))
+  } else {
+      tmp.table <- annotate_with_pathway(cluster.id)
+  }
+
+  if (nrow(tmp.table) == 0 | "status" %in% colnames(tmp.table)){
+    tmp.table <- data.frame(status = c("Cell type not detected!"))
+  } else {
+      tmpdf <- data.frame(cluster.id = c(cluster.id), annotation = c(head(tmp.table, 1)$ID))
+      annotationdf <- rbind(annotationdf, tmpdf)
+      
+      tmpdf <- data.frame(cluster.id = c(cluster.id), annotation = c(paste(head(tmp.table, 5)$ID, collapse = ", ")))
+      top5.annotationdf <- rbind(top5.annotationdf, tmpdf)
+    
+  }
+  
+  cat(paste("\n\n### Cluster: ", cluster.id, "##\n"))
+  print( htmltools::tagList(datatable(tmp.table, extensions = 'Buttons',
+                                      filter = "top",
+                                      options = list(dom = 'Blfrtip',
+                                                     buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                     lengthMenu = list(c(10,25,50,-1),
+                                                                       c(10,25,50,"All")),
+                                                     columnDefs = list(list(
+                                                       targets = "_all",
+                                                       render = JS(
+                                                         "function(data, type, row, meta) {",
+                                                         "return type === 'display' && data != null && data.length > 100 ?",
+                                                         "'<span title=\"' + data + '\">' + data.substr(0, 100) + '...</span>' : data;",
+                                                         "}")
+                                                     ))
+                                      ))))
+  cat("\n \n")  
+}
+```
+
+## Top-1 annotation for each cluster
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+annotationdf %>% create_dt()
+```
+
+## Top-5 annotation for each clusters
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+top5.annotationdf %>% create_dt()
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>%
+  rowwise() %>%
+  mutate(prediction2 = ifelse(nrow(subset(annotationdf, annotationdf$cluster.id == cca.cluster.0.5)) != 0, 
+                              subset(annotationdf, annotationdf$cluster.id == cca.cluster.0.5)$annotation,
+                              "None")) %>%
+  column_to_rownames("barcode")
+meta.data <- meta.data[row.names(s.obj@meta.data),]
+s.obj <- AddMetaData(s.obj, metadata = meta.data$prediction2, col.name = "prediction2")
+
+DimPlot(object = s.obj, reduction = "cca_UMAP", label.box = TRUE, label = TRUE, repel = TRUE, group.by = "prediction2")
+```
+
+## Number of cells in each annotated cluster (top-1 annotation)
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+table(s.obj$prediction2, s.obj$name) %>% as.data.frame() %>% pivot_wider(names_from = "Var1", values_from = "Freq") %>% create_dt()
+```
+
+# UMAP: expression of some genes
+
+## All samples in integrated UMAP {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+Idents(s.obj) <- "cca.cluster.0.5"
+FeaturePlot(s.obj, features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), label = TRUE, reduction = "cca_UMAP")
+```
+
+## Each sample in integrated UMAP {,tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+Idents(s.obj) <- "cca.cluster.0.5"
+for (sample.id in unique(s.obj$name)){
+  cat(sprintf("### Sample %s \n", sample.id))
+  p <- FeaturePlot(subset(s.obj, name == sample.id), features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), label = TRUE, reduction = "cca_UMAP")  
+  print(p)
+  cat("\n \n")
+}
+
+```
+
+## Violin plot: Ciita, Foxp3, Klrg1, Gata3 genes, all samples
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+VlnPlot(object = s.obj, features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), group.by = "cca.cluster.0.5", ncol = 2, assay = "SCT", slot = "data")
+```
+
+## Violin plot: Ciita, Foxp3, Klrg1, Gata3 genes, each sample {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (sample.id in unique(s.obj$name)){
+  cat(sprintf("### Sample %s \n", sample.id))
+  p <- VlnPlot(object = subset(s.obj, name == sample.id), features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), group.by = "cca.cluster.0.5", ncol = 2, assay = "SCT", slot = "data")  
+  print(p)
+  cat("\n \n")
+}
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+if (file.exists(file.path(path.to.01.output,sprintf("Project_%s.rds", PROJECT))) == FALSE){
+  saveRDS(s.obj, file.path(path.to.01.output,sprintf("Project_%s.rds", PROJECT)))  
+} else {
+  s.obj <- readRDS(file.path(path.to.01.output,sprintf("Project_%s.rds", PROJECT)))
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+#### CONVERT seurat object to cloupe file
+if ("loupeR" %in% installed.packages() == FALSE){
+  install.packages("hdf5r")
+  install.packages("/media/hieunguyen/HD01/storage/offline_pkgs/loupeR_Linux.tar.gz", repos = NULL, type = "source")
+}
+
+library(loupeR)
+
+loupeR::setup()
+create_loupe_from_seurat(
+    s.obj,
+    output_dir = file.path(path.to.01.output),
+    output_name = sprintf("PROJECT_%s_cloupe_converted_from_seurat", PROJECT),
+    dedup_clusters = FALSE,
+    executable_path = NULL,
+    force = FALSE
+    )
+```
+
+
