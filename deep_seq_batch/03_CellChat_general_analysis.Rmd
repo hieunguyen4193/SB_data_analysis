@@ -292,8 +292,8 @@ for (cluster.id in all.clusters){
 }
 
 ```
-## Visualization on pathway levels, received signals {.tabset}
 
+## Visualization on pathway levels, received signals {.tabset}
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 
 # for (cluster.id in c("cluster_0", "cluster_2", "cluster_5", "cluster_6")){
