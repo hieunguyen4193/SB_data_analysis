@@ -31,36 +31,38 @@ sample.list <- list(
 
 filter10cells <- "Filter10"
 
-path.to.rmd.file <- file.path(path.to.main.src, "03_CellChat_general_analysis.Rmd")
-for (path.to.s.obj in all.s.objs){
-  PROJECT <- str_split(path.to.s.obj, "/data_analysis")[[1]][[1]] %>% basename()
-  dataset_name <- subset(samplesheet, samplesheet$path == path.to.s.obj)$dataset_name %>% unique()
-  if (length(dataset_name) == 1){
-    dataset_name <- dataset_name[[1]]
-  } else {
-    print("error, more than 1 dataset_name")
-  }
-  dir.create(file.path(outdir, "SeuratV5", PROJECT, "html_output", dataset_name, "03_output"), showWarnings = FALSE, recursive = TRUE)  
-  sample.in.data <- sample.list[[PROJECT]]
-  for (sample.id in sample.in.data){
+path.to.rmd.file <- file.path(path.to.main.src, "03_CellChat_diff_analysis_2_samples.Rmd")
+for (i in seq(1, nrow(samplesheet))){
+    tmp.samplesheet <- samplesheet[i, ]
+    path.to.s.obj <- tmp.samplesheet$path
+    dataset_name <- tmp.samplesheet$dataset_name
+    PROJECT <- tmp.samplesheet$PROJECT
+    sample1 <- tmp.samplesheet$sample1
+    sample2 <- tmp.samplesheet$sample2
+
     path.to.html.outputs <- file.path(outdir,
                                       "SeuratV5",
                                       PROJECT,
                                       "html_output",
                                       dataset_name,
                                       "03_output")
-    html.filename <- sprintf("%s.CellChat.html", sample.id)
-    path.to.main.output <- file.path(outdir, "SeuratV5", PROJECT, "data_analysis" )
+    html.filename <- sprintf("%s_vs_%s.CellChat.html", sample1, sample2)
+    path.to.main.output <- file.path(outdir, "SeuratV5", PROJECT, "data_analysis")
     path.to.03.output <- file.path(path.to.main.output, "03_output")
     dir.create(path.to.03.output, showWarnings = FALSE, recursive = TRUE)
-    path.to.save.output <- file.path(path.to.03.output, dataset_name, sample.id)
+    path.to.save.output <- file.path(path.to.03.output, dataset_name, sprintf("%s_vs_%s", sample1, sample2))
+    path.to.cellchat1 <- file.path(path.to.03.output, dataset_name, sample1, sprintf("CellChat_object.%s.Filter10.rds", sample1))
+    path.to.cellchat2 <- file.path(path.to.03.output, dataset_name, sample2, sprintf("CellChat_object.%s.Filter10.rds", sample2))
     
     if (file.exists(file.path(path.to.html.outputs, html.filename)) == FALSE){
       rmarkdown::render(
         input = path.to.rmd.file,
         params = list(
-          sample.id = sample.id,
           path.to.s.obj = path.to.s.obj,
+          sample1 = sample1,
+          path.to.cellchat1 = path.to.cellchat1,
+          sample2 = sample2,
+          path.to.cellchat2 = path.to.cellchat2,
           path.to.save.output = path.to.save.output,
           filter10cells = filter10cells
         ),
@@ -69,4 +71,3 @@ for (path.to.s.obj in all.s.objs){
       )
     }
   }
-}
