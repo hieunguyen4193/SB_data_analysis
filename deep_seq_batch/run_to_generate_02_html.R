@@ -37,14 +37,19 @@ for (i in seq(1, nrow(samplesheet))){
   
   path.to.Rmd.file <- file.path(path.to.main.src, "02_DGE_analysis.Rmd")
   html_name <- basename(path.to.Rmd.file) %>% str_replace(".Rmd", sprintf("DGE_%s_vs_%s.html", sample1, sample2))
+  
+  input.params <- list(sample1 = sample1,
+                       sample2 = sample2,
+                       path.to.s.obj = path.to.s.obj,
+                       path.to.save.output = path.to.save.output)
+  for (i in names(input.params)){
+    print(sprintf("%s: %s", i, input.params[[i]]))
+  }
   if (file.exists(file.path(path.to.html.outputs, html_name)) == FALSE){
     rmarkdown::render(input = path.to.Rmd.file,
                       output_file = html_name,
                       output_dir = path.to.html.outputs,
-                      params = list(sample1 = sample1,
-                                    sample2 = sample2,
-                                    path.to.s.obj = path.to.s.obj,
-                                    path.to.save.output = path.to.save.output))   
+                      params = input.params)   
   }  
 }
 
