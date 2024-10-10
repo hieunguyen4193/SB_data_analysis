@@ -18,6 +18,7 @@ params:
   path.to.s.obj: NA
   path.to.save.output: NA
   filter10cells: NA
+  chosen.group: NA
 ---
 
 
@@ -66,6 +67,7 @@ sample.id <- params$sample.id
 path.to.s.obj <- params$path.to.s.obj
 path.to.save.output <- params$path.to.save.output
 filter10cells <- params$filter10cells
+chosen.group <- params$chosen.group
 
 # sample.id <- "d7_SPF"
 # path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/all.samples/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
@@ -78,7 +80,12 @@ s.obj <- readRDS(path.to.s.obj)
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
 s.obj.original <- s.obj
-s.obj <- subset(s.obj, name == sample.id)
+
+if (chosen.group == "name"){
+  s.obj <- subset(s.obj, name == sample.id)  
+} else if (chosen.group == "condition") {
+  s.obj <- subset(s.obj, condition == sample.id)
+}
 
 #####----------------------------------------------------------------------#####
 ##### LIST OF GENES AFTER REMOVING TRA/TRB/TRD/TRG GENES

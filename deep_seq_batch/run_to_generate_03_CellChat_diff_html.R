@@ -6,6 +6,9 @@ path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_ba
 source(file.path(path.to.project.src, "00_import_libraries.R"))
 source(file.path(path.to.project.src, "00_helper_functions.R"))
 
+reticulate::install_python(version = '3.8')
+reticulate::py_install(packages = 'umap-learn')
+
 outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"
@@ -53,7 +56,7 @@ for (i in seq(1, nrow(samplesheet))){
     path.to.save.output <- file.path(path.to.03.output, dataset_name, sprintf("%s_vs_%s", sample1, sample2))
     path.to.cellchat1 <- file.path(path.to.03.output, dataset_name, sample1, sprintf("CellChat_object.%s.Filter10.rds", sample1))
     path.to.cellchat2 <- file.path(path.to.03.output, dataset_name, sample2, sprintf("CellChat_object.%s.Filter10.rds", sample2))
-    
+    dir.create(path.to.html.outputs, showWarnings = FALSE, recursive = TRUE)
     if (file.exists(file.path(path.to.html.outputs, html.filename)) == FALSE){
       rmarkdown::render(
         input = path.to.rmd.file,

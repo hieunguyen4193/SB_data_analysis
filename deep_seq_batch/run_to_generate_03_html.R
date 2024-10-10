@@ -19,7 +19,9 @@ sample.list <- list(
                                               "treated_gut_CD45_2",
                                               "ctrl_gut_CD45_2",
                                               "ctrl_gut_myeloid",
-                                              "treated_gut_myeloid"),
+                                              "treated_gut_myeloid",
+                                              "ctrl_gut_CD45",
+                                              "treated_gut_CD45"),
   SBharadwaj_20240318_Sample_3_6 <- c("ctrl_liver_myeloid", 
                                       "treated_liver_myeloid")
 )
@@ -43,6 +45,11 @@ for (path.to.s.obj in all.s.objs){
   dir.create(file.path(outdir, "SeuratV5", PROJECT, "html_output", dataset_name, "03_output"), showWarnings = FALSE, recursive = TRUE)  
   sample.in.data <- sample.list[[PROJECT]]
   for (sample.id in sample.in.data){
+    if (sample.id %in% c("ctrl_gut_CD45", "treated_gut_CD45")){
+      chosen.group <- "condition"
+    } else {
+      chosen.group <- "name"
+    }
     path.to.html.outputs <- file.path(outdir,
                                       "SeuratV5",
                                       PROJECT,
@@ -56,14 +63,19 @@ for (path.to.s.obj in all.s.objs){
     path.to.save.output <- file.path(path.to.03.output, dataset_name, sample.id)
     
     if (file.exists(file.path(path.to.html.outputs, html.filename)) == FALSE){
+      input.params <- list(
+        sample.id = sample.id,
+        path.to.s.obj = path.to.s.obj,
+        path.to.save.output = path.to.save.output,
+        filter10cells = filter10cells,
+        chosen.group = chosen.group
+      )
+      for (i in names(input.params)){
+        print(sprintf("%s: %s", i, input.params[[i]]))
+      }
       rmarkdown::render(
         input = path.to.rmd.file,
-        params = list(
-          sample.id = sample.id,
-          path.to.s.obj = path.to.s.obj,
-          path.to.save.output = path.to.save.output,
-          filter10cells = filter10cells
-        ),
+        params = input.params,
         output_file = html.filename,
         output_dir = path.to.html.outputs
       )
