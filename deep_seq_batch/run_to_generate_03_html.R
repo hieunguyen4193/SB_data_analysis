@@ -54,8 +54,9 @@ for (path.to.s.obj in all.s.objs){
                                       "SeuratV5",
                                       PROJECT,
                                       "html_output",
-                                      dataset_name,
-                                      "03_output")
+                                      "03_output",
+                                      dataset_name
+                                      )
     html.filename <- sprintf("%s.CellChat.html", sample.id)
     path.to.main.output <- file.path(outdir, "SeuratV5", PROJECT, "data_analysis" )
     path.to.03.output <- file.path(path.to.main.output, "03_output")

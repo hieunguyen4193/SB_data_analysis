@@ -21,6 +21,7 @@ params:
   path.to.cellchat2: NA
   path.to.save.output: NA
   filter10cells: NA
+  chosen.group: NA
 ---
 
 
@@ -50,11 +51,6 @@ script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
-if ("CellChat" %in% row.names(installed.packages()) == FALSE){
-  devtools::install_github("immunogenomics/presto", upgrade = "never")
-  devtools::install_github("jinworks/CellChat", upgrade = "never")
-} 
-print("CellChat is already installed!")
 library(patchwork)
 options(stringsAsFactors = FALSE)
 library("CellChat")
@@ -72,25 +68,36 @@ sample2 <- params$sample2
 path.to.cellchat2 <- params$path.to.cellchat2
 path.to.save.output <- params$path.to.save.output
 filter10cells <- params$filter10cells
+chosen.group <- params$chosen.group
 
-# path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/B_cells/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
-# sample1 <- "d7_SPF"
-# path.to.cellchat1 <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/from_12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/B_cells/d7_SPF/part1/CellChat_object.d7_SPF.Filter10.rds"
-# sample2 <- "d7_GF"
-# path.to.cellchat2 <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/from_12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/B_cells/d7_GF/part1/CellChat_object.d7_GF.Filter10.rds"
-# path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/compare_2_samples/from_12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/B_cells/d7_SPF_vs_d7_GF"
+# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/01_output/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5.addedConditions.rds"
+# sample1 <- "ctrl_gut_myeloid"
+# path.to.cellchat1 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/full/ctrl_gut_myeloid/CellChat_object.ctrl_gut_myeloid.Filter10.rds"
+# sample2 <- "treated_gut_myeloid"
+# path.to.cellchat2 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/full/treated_gut_myeloid/CellChat_object.treated_gut_myeloid.Filter10.rds"
+# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/full/ctrl_gut_myeloid_vs_treated_gut_myeloid"
 # filter10cells <- "Filter10"
-
+# chosen.group <- "name"
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
-s.obj <- readRDS(path.to.s.obj)
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
 cellchat.sample1 <- readRDS(path.to.cellchat1)
 cellchat.sample2 <- readRDS(path.to.cellchat2)
 
-s.obj.full <- readRDS(path.to.s.obj)
-s.obj <- subset(s.obj.full, name %in% c(sample1, sample2))
+s.obj <- readRDS(path.to.s.obj)
+if (chosen.group == "condition"){
+  print("Changing the sample name to sample condition")
+  meta.data <- s.obj@meta.data %>% 
+    rownames_to_column("barcode") %>%
+    rowwise() %>%
+    mutate(name = condition) %>%
+    column_to_rownames("barcode")
+  meta.data <- meta.data[rownames(s.obj@meta.data),]
+  s.obj <- AddMetaData(object = s.obj, col.name = "name", metadata = meta.data$name)
+}
+
+s.obj <- subset(s.obj, name %in% c(sample1, sample2))
 ```
 
 # Dataset overview
@@ -111,10 +118,6 @@ sample2.clusters <- levels(cellchat.sample2@idents)
 # shared.clusters <- to_vec( for(item in intersect(sample1.clusters, sample2.clusters))  str_replace(item, "cluster_", "") %>% as.numeric())
 # sample1.cells <- subset(s.obj@meta.data, s.obj@meta.data$name == sample1 & s.obj@meta.data$cca.cluster.0.5 %in% shared.clusters) %>% row.names()
 # sample2.cells <- subset(s.obj@meta.data, s.obj@meta.data$name == sample2 & s.obj@meta.data$cca.cluster.0.5 %in% shared.clusters) %>% row.names()
-
-##### temporary fix --> https://github.com/jinworks/CellChat/issues/202
-# cellchat.sample1@data.smooth <- cellchat.sample1@data.project
-# cellchat.sample2@data.smooth <- cellchat.sample2@data.project
 
 cellchat.sample1 <- subsetCellChat(object = cellchat.sample1, idents.use = intersect(sample1.clusters, sample2.clusters))
 cellchat.sample2 <- subsetCellChat(object = cellchat.sample2, idents.use = intersect(sample1.clusters, sample2.clusters))
@@ -168,8 +171,6 @@ patchwork::wrap_plots(plots = gg)
 # Identify the conserved and context-specific signaling pathways
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 library(uwot)
-# reticulate::install_python(version = '3.8')
-# reticulate::py_install(packages = 'umap-learn')
 
 if (file.exists(file.path(path.to.save.output, sprintf("cellchat_merge_object_%s_vs_%s_%s.SimilarityPairwise.rds", sample1, sample2, filter10cells))) == FALSE){
   cellchat <- computeNetSimilarityPairwise(cellchat, type = "functional")
@@ -372,7 +373,6 @@ gene.up <- extractGeneSubsetFromPair(net.up.both.LG, cellchat)
 gene.down <- extractGeneSubsetFromPair(net.down.both.LG, cellchat)
 ```
 
-
 ### Tables
 #### Up-regulated pathway in `r params$sample1`
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
@@ -430,6 +430,7 @@ for (source.cluster in plt.clusters){
 
 ### Heatmap DOWN-regulated pathway in `r params$sample1` {.tabset}
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=21, fig.height=15}
+
 plt.clusters <- to_vec(for (item in unique(net.down.both.LG$source)) str_replace(item, "cluster_", "") %>% as.numeric()) %>% sort()
 
 for (source.cluster in plt.clusters){
@@ -447,7 +448,7 @@ for (source.cluster in plt.clusters){
     pairLR.use.down <- source.net.down[, "interaction_name", drop = F]
     if (sample1 %in% names(count.avail.samples) == FALSE){
       gg1 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, comparison = c(2),  
-                              angle.x = 90, remove.isolate = T, title.name = paste0("down-regulated signaling in ", names(object.list)[1]), 
+                              angle.x = 90, remove.isolate = T, title.name = paste0("down-regulated signaling in ", names(object.list)[2]), 
                               sources.use = c(source.cluster))
     } else if (sample2 %in% names(count.avail.samples) == FALSE){
       gg1 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, comparison = c(1),  
@@ -459,11 +460,11 @@ for (source.cluster in plt.clusters){
                               sources.use = c(source.cluster))
     }
   }
-  
   print(gg1)
   cat("\n \n")
 }
 
+subset(net, net$interaction_name %in% pairLR.use.down$interaction_name & net$source == source.cluster) 
 ```
 
 ### Chord diagram UP-regulated pathway in `r params$sample1` diagram {.tabset}
