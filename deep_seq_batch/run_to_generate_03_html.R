@@ -22,7 +22,7 @@ sample.list <- list(
                                               "treated_gut_myeloid",
                                               "ctrl_gut_CD45",
                                               "treated_gut_CD45"),
-  SBharadwaj_20240318_Sample_3_6 <- c("ctrl_liver_myeloid", 
+  SBharadwaj_20240318_Sample_3_6 = c("ctrl_liver_myeloid", 
                                       "treated_liver_myeloid")
 )
 

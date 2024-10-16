@@ -15,8 +15,6 @@ path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_ba
 source(file.path(path.to.project.src, "00_import_libraries.R"))
 source(file.path(path.to.project.src, "00_helper_functions.R"))
 
-
-
 outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"

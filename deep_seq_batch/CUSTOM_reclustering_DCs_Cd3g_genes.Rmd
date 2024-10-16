@@ -57,7 +57,7 @@ source(file.path(path.to.project.src, "00_helper_functions.R"))
 # CONFIGURATIONS AND PREPRATIONS
 #####----------------------------------------------------------------------#####
 # outdir <- "/home/hieunguyen/CRC1382/outdir"
-outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5"
+outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8_2_5"
 
 path.to.main.input <- file.path(outdir, PROJECT)
@@ -423,22 +423,22 @@ if (file.exists(file.path(path.to.01.output,sprintf("Project_%s.rds", PROJECT)))
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
 #### CONVERT seurat object to cloupe file
-if ("loupeR" %in% installed.packages() == FALSE){
-  install.packages("hdf5r")
-  install.packages("/media/hieunguyen/HD01/storage/offline_pkgs/loupeR_Linux.tar.gz", repos = NULL, type = "source")
-}
-
-library(loupeR)
-
-loupeR::setup()
-create_loupe_from_seurat(
-    s.obj,
-    output_dir = file.path(path.to.01.output),
-    output_name = sprintf("PROJECT_%s_cloupe_converted_from_seurat", PROJECT),
-    dedup_clusters = FALSE,
-    executable_path = NULL,
-    force = TRUE
-    )
+# if ("loupeR" %in% installed.packages() == FALSE){
+#   install.packages("hdf5r")
+#   install.packages("/media/hieunguyen/HD01/storage/offline_pkgs/loupeR_Linux.tar.gz", repos = NULL, type = "source")
+# }
+# 
+# library(loupeR)
+# 
+# loupeR::setup()
+# create_loupe_from_seurat(
+#     s.obj,
+#     output_dir = file.path(path.to.01.output),
+#     output_name = sprintf("PROJECT_%s_cloupe_converted_from_seurat", PROJECT),
+#     dedup_clusters = FALSE,
+#     executable_path = NULL,
+#     force = TRUE
+#     )
 ```
 
 

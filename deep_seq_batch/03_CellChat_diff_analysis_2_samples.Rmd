@@ -70,14 +70,15 @@ path.to.save.output <- params$path.to.save.output
 filter10cells <- params$filter10cells
 chosen.group <- params$chosen.group
 
-# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/01_output/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5.addedConditions.rds"
+# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/07_output/v0.1/Monocyte_Macrophages/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5_v0.1_Monocyte_Macrophages.addedConditions.rds"
 # sample1 <- "ctrl_gut_myeloid"
-# path.to.cellchat1 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/full/ctrl_gut_myeloid/CellChat_object.ctrl_gut_myeloid.Filter10.rds"
+# path.to.cellchat1 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/Monocyte_Macrophages/ctrl_gut_myeloid/CellChat_object.ctrl_gut_myeloid.Filter10.rds"
 # sample2 <- "treated_gut_myeloid"
-# path.to.cellchat2 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/full/treated_gut_myeloid/CellChat_object.treated_gut_myeloid.Filter10.rds"
-# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/full/ctrl_gut_myeloid_vs_treated_gut_myeloid"
+# path.to.cellchat2 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/Monocyte_Macrophages/treated_gut_myeloid/CellChat_object.treated_gut_myeloid.Filter10.rds"
+# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/Monocyte_Macrophages/ctrl_gut_myeloid_vs_treated_gut_myeloid"
 # filter10cells <- "Filter10"
 # chosen.group <- "name"
+
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 ```
 
@@ -429,8 +430,7 @@ for (source.cluster in plt.clusters){
 ```
 
 ### Heatmap DOWN-regulated pathway in `r params$sample1` {.tabset}
-```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=21, fig.height=15}
-
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=15}
 plt.clusters <- to_vec(for (item in unique(net.down.both.LG$source)) str_replace(item, "cluster_", "") %>% as.numeric()) %>% sort()
 
 for (source.cluster in plt.clusters){
@@ -441,7 +441,9 @@ for (source.cluster in plt.clusters){
   num.NA.ligand <- nrow(subset(source.net.down, is.na(source.net.down$ligand.pvalues) == TRUE))
   num.NA.receptor <- nrow(subset(source.net.down, is.na(source.net.down$receptor.pvalues) == TRUE))
   
-  if (num.NA.ligand == nrow(source.net.down) | num.NA.receptor == nrow(source.net.down) | length(intersect(source.net.down$pathway_name, all.pathways)) == 0){
+  if (num.NA.ligand == nrow(source.net.down) | 
+      num.NA.receptor == nrow(source.net.down) | 
+      length(intersect(source.net.down$pathway_name, all.pathways)) == 0){
     gg1 <- ggplot() + ggtitle("No significant signaling signal to show!")
   } else {
     count.avail.samples <- table(subset(net, net$pair_LG_cluster_name %in% source.net.down$pair_LG_cluster_name)$datasets)
@@ -464,7 +466,11 @@ for (source.cluster in plt.clusters){
   cat("\n \n")
 }
 
-subset(net, net$interaction_name %in% pairLR.use.down$interaction_name & net$source == source.cluster) 
+# subset(net, 
+#        net$interaction_name %in% pairLR.use.down$interaction_name &
+#          net$source == source.cluster &
+#          net$ligand.pvalues <= 0.05 &
+#          net$receptor.pvalues <= 0.05)
 ```
 
 ### Chord diagram UP-regulated pathway in `r params$sample1` diagram {.tabset}
