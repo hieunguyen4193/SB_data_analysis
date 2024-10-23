@@ -56,14 +56,12 @@ source(file.path(path.to.project.src, "00_helper_functions.R"))
 #####----------------------------------------------------------------------#####
 # CONFIGURATIONS AND PREPRATIONS
 #####----------------------------------------------------------------------#####
-outdir <- "/home/hieunguyen/CRC1382/outdir"
-# outdir <- "/media/hieunguyen/HD01/outdir/CRC1382"
+outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 PROJECT <- params$PROJECT
-# PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8_2_5"
 
 # path.to.main.input <- file.path(outdir, "SBharadwaj_20240318_merged_dupl_samples", PROJECT)
 
-path.to.main.input <- file.path(outdir, "SeuratV5", PROJECT)
+path.to.main.input <- file.path(outdir, PROJECT)
 
 s.obj.raw <- readRDS(file.path(path.to.main.input, "s1_output", sprintf("%s.output.s1.rds", PROJECT) ))
 s.obj <- readRDS(file.path(path.to.main.input, "s8_output", sprintf("%s.output.s8.rds", PROJECT)))
