@@ -70,12 +70,12 @@ path.to.save.output <- params$path.to.save.output
 filter10cells <- params$filter10cells
 chosen.group <- params$chosen.group
 
-# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/07_output/v0.1/Monocyte_Macrophages/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5_v0.1_Monocyte_Macrophages.addedConditions.rds"
-# sample1 <- "ctrl_gut_myeloid"
+# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/01_output/Project_SBharadwaj_20240318_Sample_1_4_7_8.addedConditions.rds"
+# sample1 <- "ctrl_gut_CD45"
 # path.to.cellchat1 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/Monocyte_Macrophages/ctrl_gut_myeloid/CellChat_object.ctrl_gut_myeloid.Filter10.rds"
-# sample2 <- "treated_gut_myeloid"
-# path.to.cellchat2 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/Monocyte_Macrophages/treated_gut_myeloid/CellChat_object.treated_gut_myeloid.Filter10.rds"
-# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/Monocyte_Macrophages/ctrl_gut_myeloid_vs_treated_gut_myeloid"
+# sample2 <- "treated_gut_CD45"
+# path.to.cellchat2 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/full/treated_gut_CD45/CellChat_object.treated_gut_CD45.Filter10.rds"
+# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/full/ctrl_gut_CD45_vs_treated_gut_CD45"
 # filter10cells <- "Filter10"
 # chosen.group <- "name"
 

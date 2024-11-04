@@ -20,14 +20,13 @@ for (i in seq(1, nrow(samplesheet))){
   dataset_name <- samplesheet[i, "dataset_name"]
   sample1 <- samplesheet[i, "sample1"]
   sample2 <- samplesheet[i, "sample2"]
-  path.to.main.output <- file.path(outdir, "SeuratV5", PROJECT, "data_analysis" )
+  path.to.main.output <- file.path(outdir, PROJECT, "data_analysis" )
   path.to.02.output <- file.path(path.to.main.output, "02_output")
   dir.create(path.to.02.output, showWarnings = FALSE, recursive = TRUE)
   path.to.save.output <- file.path(path.to.02.output, dataset_name, sprintf("%s_vs_%s", sample1, sample2))
   dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
   path.to.s.obj <- samplesheet[i, "path"]
   path.to.html.outputs <- file.path(outdir, 
-                                    "SeuratV5", 
                                     PROJECT, 
                                     "html_output", 
                                     "02_output",
@@ -50,6 +49,8 @@ for (i in seq(1, nrow(samplesheet))){
                       output_file = html_name,
                       output_dir = path.to.html.outputs,
                       params = input.params)   
-  }  
+  } else {
+    print(sprintf("File %s exists", file.path(path.to.html.outputs, html_name)))
+  }
 }
 

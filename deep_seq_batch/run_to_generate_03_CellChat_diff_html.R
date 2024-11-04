@@ -39,14 +39,13 @@ for (i in seq(1, nrow(samplesheet))){
       chosen.group <- "name"
     }
     path.to.html.outputs <- file.path(outdir,
-                                      "SeuratV5",
                                       PROJECT,
                                       "html_output",
                                       "03_output",
                                       dataset_name
                                       )
     html.filename <- sprintf("%s_vs_%s.CellChat.html", sample1, sample2)
-    path.to.main.output <- file.path(outdir, "SeuratV5", PROJECT, "data_analysis")
+    path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
     path.to.03.output <- file.path(path.to.main.output, "03_output")
     dir.create(path.to.03.output, showWarnings = FALSE, recursive = TRUE)
     path.to.save.output <- file.path(path.to.03.output, dataset_name, sprintf("%s_vs_%s", sample1, sample2))

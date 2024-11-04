@@ -23,13 +23,16 @@ sample.list <- list(
                                               "ctrl_gut_CD45",
                                               "treated_gut_CD45"),
   SBharadwaj_20240318_Sample_3_6 = c("ctrl_liver_myeloid", 
-                                      "treated_liver_myeloid")
+                                      "treated_liver_myeloid"),
+  SBharadwaj_20240318_Sample_1_4_7_8 = c(
+    "ctrl_gut_CD45_1",
+    "treated_gut_CD45_1",
+    "treated_gut_CD45_2",
+    "ctrl_gut_CD45_2",
+    "ctrl_gut_CD45",
+    "treated_gut_CD45"
+  )
 )
-
-# for (p in unique(samplesheet$PROJECT)){
-#     sample.list[[p]] <- c(subset(samplesheet, samplesheet$PROJECT == p)$sample1, 
-#                           subset(samplesheet, samplesheet$PROJECT == p)$sample2) %>% unique()
-# }
 
 filter10cells <- "Filter10"
 
@@ -42,7 +45,7 @@ for (path.to.s.obj in all.s.objs){
   } else {
     print("error, more than 1 dataset_name")
   }
-  dir.create(file.path(outdir, "SeuratV5", PROJECT, "html_output", dataset_name, "03_output"), showWarnings = FALSE, recursive = TRUE)  
+  dir.create(file.path(outdir, PROJECT, "html_output", dataset_name, "03_output"), showWarnings = FALSE, recursive = TRUE)  
   sample.in.data <- sample.list[[PROJECT]]
   for (sample.id in sample.in.data){
     if (sample.id %in% c("ctrl_gut_CD45", "treated_gut_CD45")){
@@ -51,14 +54,13 @@ for (path.to.s.obj in all.s.objs){
       chosen.group <- "name"
     }
     path.to.html.outputs <- file.path(outdir,
-                                      "SeuratV5",
                                       PROJECT,
                                       "html_output",
                                       "03_output",
                                       dataset_name
                                       )
     html.filename <- sprintf("%s.CellChat.html", sample.id)
-    path.to.main.output <- file.path(outdir, "SeuratV5", PROJECT, "data_analysis" )
+    path.to.main.output <- file.path(outdir, PROJECT, "data_analysis" )
     path.to.03.output <- file.path(path.to.main.output, "03_output")
     dir.create(path.to.03.output, showWarnings = FALSE, recursive = TRUE)
     path.to.save.output <- file.path(path.to.03.output, dataset_name, sample.id)

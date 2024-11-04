@@ -1,5 +1,7 @@
 # gc()
 # rm(list = ls())
+# use the sub-clustering indices from
+# /home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch/sub_clustering_indices.R
 
 path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"
 scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline_SeuratV5/processes_src"
@@ -12,13 +14,15 @@ source(file.path(scrna_pipeline_src, "s8_integration_and_clustering_SeuratV5.R")
 #####----------------------------------------------------------------------#####
 # CONFIGURATIONS AND PREPRATIONS
 #####----------------------------------------------------------------------#####
-outdir <- "/home/hieunguyen/CRC1382/outdir"
-PROJECT <- "SBharadwaj_20240318_Sample_3_6"
+# outdir <- "/home/hieunguyen/CRC1382/outdir"
+outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
+# PROJECT <- "SBharadwaj_20240318_Sample_3_6"
 # PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8_2_5"
-
+PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8"
+  
 sub.cluster.idx <- "v0.1"
 
-path.to.main.input <- file.path(outdir, "SeuratV5", PROJECT)
+path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(path.to.main.input, "data_analysis")
 path.to.01.output <- file.path(path.to.main.output, "01_output")
 path.to.save.subclusters <- file.path(path.to.main.output, "sub_clusters", sub.cluster.idx)
