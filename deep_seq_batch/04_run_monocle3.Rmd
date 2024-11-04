@@ -62,7 +62,7 @@ path.to.pipeline.src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline"
 source(file.path(path.to.pipeline.src, "scRNA_GEX_pipeline", "processes_src", "import_libraries.R"))
 source(file.path(path.to.pipeline.src, "scRNA_GEX_pipeline", "processes_src", "helper_functions.R"))
 
-path.to.s.obj <- params@path.to.s.obj
+path.to.s.obj <- params$path.to.s.obj
 path.to.save.output <- params$path.to.save.output
 
 # path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/01_output/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5.addedConditions.rds"
