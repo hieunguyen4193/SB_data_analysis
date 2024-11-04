@@ -10,7 +10,6 @@ local({r <- getOption("repos")
 r["CRAN"] <- "http://cran.r-project.org"
 options(repos=r)})
 
-
 scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline/processes_src"
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))

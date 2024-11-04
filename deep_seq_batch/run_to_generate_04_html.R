@@ -1,35 +1,60 @@
+##### clean up #####
 gc()
 rm(list = ls())
 
-path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"
+my_random_seed <- 42
+set.seed(my_random_seed)
 
-source(file.path(path.to.project.src, "00_import_libraries.R"))
-source(file.path(path.to.project.src, "00_helper_functions.R"))
+scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline/processes_src"
+source(file.path(scrna_pipeline_src, "import_libraries.R"))
+source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
-outdir <- "/home/hieunguyen/CRC1382/outdir"
+library(devtools)
+if ("monocle" %in% installed.packages() == FALSE){
+  BiocManager::install("monocle", update = FALSE)
+}
+library(monocle)
+library(dplyr)
+outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"
+source(file.path(path.to.main.src, "monocle2_helper_functions.R"))
 
-all.PROJECTS <- c("SBharadwaj_20240318_Sample_2_5",
-                  "SBharadwaj_20240318_Sample_1_4", 
-                  "SBharadwaj_20240318_Sample_3_6",
-                  "SBharadwaj_20240318_Sample_1_4_7_8",
-                  "SBharadwaj_20240318_Sample_4_8",
-                  "SBharadwaj_20240318_Sample_1_7",
-                  "SBharadwaj_20240318_Sample_7_8",
-                  "SBharadwaj_20240318_Sample_2_3_5_6")
+samplesheet <- read.csv(file.path(path.to.main.src, "SampleSheet_for_DGE_and_CellChat.csv"))
+samplesheet <- samplesheet %>% rowwise() %>%
+  mutate(full.dataset.name = sprintf("%s_%s", PROJECT, dataset_name))
+samplesheet <- samplesheet[!duplicated(samplesheet$full.dataset.name), ]
 
-for (PROJECT in setdiff(all.PROJECTS, excluded_cellchat_runs)){
-  
-  path.to.html.outputs <- file.path(outdir, "SeuratV5" , PROJECT, "html_output")
-  dir.create(path.to.html.outputs, showWarnings = FALSE, recursive = TRUE)
-  
-  path.to.Rmd.file <- file.path(path.to.main.src, "04_CellChat_interaction_between_clusters.assigned_clusters.Rmd")
-  html_name <- basename(path.to.Rmd.file) %>% str_replace(".Rmd", sprintf(".%s.html", PROJECT))
-  if (file.exists(file.path(path.to.html.outputs, html_name)) == FALSE){
-    rmarkdown::render(input = path.to.Rmd.file,
-                      output_file = html_name,
-                      output_dir = path.to.html.outputs,
-                      params = list(PROJECT = PROJECT))   
-  }  
+if ("svglite" %in% installed.packages() == FALSE){
+  install.packages("svglite")
 }
+
+path.to.rmd <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch/04_run_monocle3.Rmd"
+
+for (full.name in unique(samplesheet$full.dataset.name)){
+  print(sprintf("Working on dataset %s", full.name))
+  PROJECT <- subset(samplesheet, samplesheet$full.dataset.name == full.name)$PROJECT
+  
+  path.to.save.html <- file.path(outdir, PROJECT, "html_output", "04_output")
+  dir.create(path.to.save.html, showWarnings = FALSE, recursive = TRUE)
+  
+  path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
+  dataset_name <- subset(samplesheet, samplesheet$full.dataset.name == full.name)$dataset_name
+  path.to.s.obj <- subset(samplesheet, samplesheet$full.dataset.name == full.name)$path
+  path.to.04.output <- file.path(path.to.main.output, "04_output", PROJECT, dataset_name)
+  dir.create(path.to.04.output, showWarnings = FALSE, recursive = TRUE)
+  
+  save.html.name <- sprintf("04_monocle3_%s_%s.html", PROJECT, dataset_name)
+  if (file.exists(file.path(path.to.save.html, save.html.name)) == FALSE){
+    rmarkdown::render(
+      input = path.to.rmd,
+      params = list(
+        path.to.s.obj = path.to.s.obj,
+        path.to.save.output = path.to.04.output
+      ),
+      output_file = save.html.name,
+      output_dir = path.to.save.html
+    )
+  }
+}
+

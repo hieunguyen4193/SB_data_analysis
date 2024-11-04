@@ -14,6 +14,7 @@ output:
     theme: lumen
 params:
   path.to.s.obj: NA
+  path.to.save.output: NA
 ---
 
   
@@ -40,8 +41,6 @@ $(document).ready(function() {
     div.datatables { height: auto !important;}
 </style>
 
-
-
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
 ##### clean up #####
 gc()
@@ -51,8 +50,8 @@ my_random_seed <- 42
 
 if ("monocle3" %in% installed.packages() == FALSE){
   devtools::install_github('cole-trapnell-lab/monocle3', upgrade = "never")
-  
 }
+
 if ("tradeSeq" %in% installed.packages() == FALSE){
   devtools::install_github("statOmics/tradeSeq", upgrade = "never")
 }
@@ -62,25 +61,14 @@ path.to.pipeline.src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline"
 source(file.path(path.to.pipeline.src, "scRNA_GEX_pipeline", "processes_src", "import_libraries.R"))
 source(file.path(path.to.pipeline.src, "scRNA_GEX_pipeline", "processes_src", "helper_functions.R"))
 
-outdir <- "/home/hieunguyen/CRC1382/outdir"
-PROJECT <- "SAlBounny_full"
-output.version <- "20241021"
+# path.to.s.obj <- params@path.to.s.obj
+# path.to.save.output <- params$path.to.save.output
 
-path.to.main.output <- file.path(outdir, PROJECT, output.version, "data_analysis")
-path.to.04.output <- file.path(path.to.main.output, "04_output")
-dir.create(path.to.04.output, showWarnings = FALSE, recursive = TRUE)
-
-path.to.s.obj <- file.path(outdir, 
-                           PROJECT, 
-                           output.version, 
-                           "data_analysis", 
-                           "03_output", 
-                           "SAlBounny_full.filter_contaminated_cells.clusterRes_0.5.subClusterFoxp3_cluster6.rds")
-
+path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/01_output/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5.addedConditions.rds"
+path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/04_output/SBharadwaj_20240318_Sample_1_4_7_8_2_5/full"
+  
 s.obj.name <- basename(path.to.s.obj)
-
 s.obj <- readRDS(path.to.s.obj)
-
 s.obj@active.assay = 'RNA'
 
 #####----------------------------------------------------------------------#####
@@ -88,8 +76,9 @@ s.obj@active.assay = 'RNA'
 #####----------------------------------------------------------------------#####
 # Note that we transfer the UMAP coordinates from our Seurat object to the new
 # monocle3 object, do not re-generate a new UMAP coordinate. 
-monocle.obj <- new_cell_data_set(expression_data = GetAssayData(s.obj, slot = "counts"),
-                          cell_metadata = s.obj@meta.data)
+monocle.obj <- new_cell_data_set(
+  expression_data = GetAssayData(s.obj, slot = "counts"),
+  cell_metadata = s.obj@meta.data)
 rowData(monocle.obj)$gene_name <- rownames(monocle.obj)
 rowData(monocle.obj)$gene_short_name <- rowData(monocle.obj)$gene_name
 monocle.obj@int_colData@listData$reducedDims$UMAP <- s.obj@reductions$INTE_UMAP@cell.embeddings
@@ -101,17 +90,23 @@ monocle.obj <- cluster_cells(monocle.obj, resolution=1e-7, random_seed = my_rand
 
 set.seed(my_random_seed)
 monocle.obj <- learn_graph(cds = monocle.obj, use_partition = FALSE, verbose = TRUE)
-
 ```
-
 
 # Main analysis
 
 ## UMAP dimensional reduction {.tabset}
 
 ### Seurat object
+
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=18}
-DimPlot(object = s.obj, reduction = "INTE_UMAP", label = TRUE, label.box = TRUE, repel = TRUE, group.by = "seurat_clusters", label.size = 8, pt.size = 1.5) +
+DimPlot(object = s.obj, 
+        reduction = "INTE_UMAP", 
+        label = TRUE, 
+        label.box = TRUE, 
+        repel = TRUE, 
+        group.by = "seurat_clusters", 
+        label.size = 8, 
+        pt.size = 1.5) + 
   ggtitle("UMAP: original Seurat object with cell type seurat_clusterss")
 ```
 
@@ -203,11 +198,11 @@ for (principal_node in list_of_principal_points){
 # Differential gene expession analysis
 ## Graph test (built-in test in monocle3)
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', include=FALSE, fig.height=10, fig.width=18}
-if (file.exists(file.path(path.to.04.output, "monocle.obj_graph_test_res.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "monocle.obj_graph_test_res.rds")) == FALSE){
   monocle.obj_graph_test_res <- graph_test(monocle.obj, neighbor_graph="principal_graph", cores=16)
-  saveRDS(monocle.obj_graph_test_res, file.path(path.to.04.output, "monocle.obj_graph_test_res.rds"))
+  saveRDS(monocle.obj_graph_test_res, file.path(path.to.save.output, "monocle.obj_graph_test_res.rds"))
 } else {
-  monocle.obj_graph_test_res <- readRDS(file.path(path.to.04.output, "monocle.obj_graph_test_res.rds"))
+  monocle.obj_graph_test_res <- readRDS(file.path(path.to.save.output, "monocle.obj_graph_test_res.rds"))
 }
 
 sig_monocle.obj_graph_test_res <- subset(monocle.obj_graph_test_res, q_value < 0.05)
@@ -342,12 +337,12 @@ input.GAM.counts <- GetAssayData(s.obj, slot = "count", assay = "RNA")[, rowname
 #                               verbose = TRUE, 
 #                               plot = TRUE,
 #                               parallel = FALSE)
-# saveRDS(eval_to_choose_K, file.path(path.to.04.output, "eval_to_choose_K.rds"))
+# saveRDS(eval_to_choose_K, file.path(path.to.save.output, "eval_to_choose_K.rds"))
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
 print("Start working on fitGAM...")
-if (file.exists(file.path(path.to.04.output, "sce.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "sce.rds")) == FALSE){
   sce <- fitGAM(counts = input.GAM.counts,
               cellWeights = as.matrix(cellWeightsdf),
               pseudotime = pseudotime, 
@@ -356,9 +351,9 @@ if (file.exists(file.path(path.to.04.output, "sce.rds")) == FALSE){
               nknots = 5,
               parallel = FALSE, 
               genes = intersect(row.names(input.GAM.counts), VariableFeatures(s.obj)))
-  saveRDS(sce, file.path(path.to.04.output, "sce.rds"))  
+  saveRDS(sce, file.path(path.to.save.output, "sce.rds"))  
 } else {
-  sce <- readRDS(file.path(path.to.04.output, "sce.rds"))
+  sce <- readRDS(file.path(path.to.save.output, "sce.rds"))
 }
 ```
 
@@ -366,7 +361,7 @@ if (file.exists(file.path(path.to.04.output, "sce.rds")) == FALSE){
 #####----------------------------------------------------------------------#####
 ##### Test within lineage
 #####----------------------------------------------------------------------#####
-if (file.exists(file.path(path.to.04.output, "tradeseq_test_res.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "tradeseq_test_res.rds")) == FALSE){
   tradeseq.testres <- hash()
   ##### Association test
   tmp <- associationTest(sce)
@@ -411,9 +406,9 @@ if (file.exists(file.path(path.to.04.output, "tradeseq_test_res.rds")) == FALSE)
     rownames_to_column("Gene")
   tradeseq.testres[["EarlyDE_test"]] <- tmp
   
-  saveRDS(tradeseq.testres, file.path(path.to.04.output, "tradeseq_test_res.rds"))
+  saveRDS(tradeseq.testres, file.path(path.to.save.output, "tradeseq_test_res.rds"))
 } else {
-  tradeseq.testres <- readRDS(file.path(path.to.04.output, "tradeseq_test_res.rds"))
+  tradeseq.testres <- readRDS(file.path(path.to.save.output, "tradeseq_test_res.rds"))
 }
 
 ```
