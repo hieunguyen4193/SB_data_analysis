@@ -10,15 +10,10 @@ source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
 library(devtools)
-if ("monocle" %in% installed.packages() == FALSE){
-  BiocManager::install("monocle", update = FALSE)
-}
-library(monocle)
 library(dplyr)
 outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"
-source(file.path(path.to.main.src, "monocle2_helper_functions.R"))
 
 samplesheet <- read.csv(file.path(path.to.main.src, "SampleSheet_for_DGE_and_CellChat.csv"))
 samplesheet <- samplesheet %>% rowwise() %>%
@@ -28,6 +23,21 @@ samplesheet <- samplesheet[!duplicated(samplesheet$full.dataset.name), ]
 if ("svglite" %in% installed.packages() == FALSE){
   install.packages("svglite")
 }
+
+if ("monocle3" %in% installed.packages() == FALSE){
+  devtools::install_github('cole-trapnell-lab/monocle3', force = TRUE, upgrade = FALSE)
+} else if (packageVersion("monocle3") != "1.3.7"){
+  devtools::install_github('cole-trapnell-lab/monocle3', force = TRUE, upgrade = FALSE)
+}
+if ("tradeSeq" %in% installed.packages() == FALSE){
+  install.packages("https://www.bioconductor.org/packages/release/bioc/src/contrib/tradeSeq_1.20.0.tar.gz", type = "source", repos = NULL)  
+}
+
+if ("monocle" %in% installed.packages()){
+  remove.packages("monocle")  
+}
+library(monocle3)
+
 
 path.to.rmd <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch/04_run_monocle3.Rmd"
 
