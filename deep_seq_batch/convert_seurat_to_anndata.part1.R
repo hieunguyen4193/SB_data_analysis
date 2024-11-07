@@ -33,7 +33,8 @@ for (full.name in unique(samplesheet$full.dataset.name)){
   path.to.seurat2anndata <- file.path(path.to.main.output, "09_output", "seurat2anndata")
   dir.create(path.to.seurat2anndata, showWarnings = FALSE, recursive = TRUE)
   
-  object.name <- str_replace(basename(path.to.input.s.obj), ".rds", "")
+  # object.name <- str_replace(basename(path.to.input.s.obj), ".rds", "")
+  object.name <- full.name
   
   s.obj <- readRDS(path.to.input.s.obj)
   
