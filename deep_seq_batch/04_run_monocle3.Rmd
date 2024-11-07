@@ -1,5 +1,5 @@
 ---
-title: "Monocle3 trajectory analysis"
+title: "Monocle3 trajectory analysis, use_partition: `r params$use_partition `"
 author:
   - "trnguyen@ukaachen.de"
 date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
@@ -15,6 +15,8 @@ output:
 params:
   path.to.s.obj: NA
   path.to.save.output: NA
+  excluded.clusters: NA
+  use_partition: NA
 ---
   
 ```{css zoom-lib-src, echo = FALSE}
@@ -53,17 +55,21 @@ path.to.pipeline.src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline"
 source(file.path(path.to.pipeline.src, "scRNA_GEX_pipeline", "processes_src", "import_libraries.R"))
 source(file.path(path.to.pipeline.src, "scRNA_GEX_pipeline", "processes_src", "helper_functions.R"))
 
-# path.to.s.obj <- params$path.to.s.obj
-# path.to.save.output <- params$path.to.save.output
+path.to.s.obj <- params$path.to.s.obj
+path.to.save.output <- params$path.to.save.output
+excluded.clusters <- params$excluded.clusters
+use_partition <- params$use_partition
 
-path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/01_output/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5.addedConditions.rds"
-path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/04_output/SBharadwaj_20240318_Sample_1_4_7_8_2_5/full"
-  
+# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/07_output/v0.1/Monocyte_Macrophages/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5_v0.1_Monocyte_Macrophages.addedConditions.rds"
+# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/04_output/SBharadwaj_20240318_Sample_1_4_7_8_2_5/Monocyte_Macrophages"
+# excluded.clusters <- NULL
+# use_partition <- FALSE
+
 s.obj.name <- basename(path.to.s.obj)
 s.obj <- readRDS(path.to.s.obj)
 
 s.obj@active.assay <- "SCT"
-
+dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 if (file.exists(file.path(path.to.save.output, "monocle3.rds")) == FALSE){
   #####----------------------------------------------------------------------#####
   # CONVERT THE SEURAT OBJECT TO MONOCLE3 OBJECT
@@ -81,10 +87,10 @@ if (file.exists(file.path(path.to.save.output, "monocle3.rds")) == FALSE){
   #####----------------------------------------------------------------------#####
   monocle.obj <- cluster_cells(monocle.obj, resolution=1e-7, random_seed = my_random_seed)
   set.seed(my_random_seed)
-  monocle.obj <- learn_graph(cds = monocle.obj, use_partition = TRUE, verbose = TRUE)
-  saveRDS(monocle.obj, file.path(path.to.save.output, "monocle3.rds"))
+  monocle.obj <- learn_graph(cds = monocle.obj, use_partition = use_partition, verbose = TRUE)
+  saveRDS(monocle.obj, file.path(path.to.save.output, sprintf("monocle3_use_partition_%s.rds", use_partition)))
 } else {
-  monocle.obj <- readRDS(file.path(path.to.save.output, "monocle3.rds"))
+  monocle.obj <- readRDS(file.path(path.to.save.output, sprintf("monocle3_use_partition_%s.rds", use_partition)))
 }
 
 ```
@@ -154,10 +160,9 @@ remove.principal_points <- c()
 for (principal_node in list_of_principal_points){
   monocle.obj <- order_cells(cds = monocle.obj, reduction_method = "UMAP", root_pr_nodes = principal_node)
   calculated_pseudotime <- monocle.obj@principal_graph_aux@listData$UMAP$pseudotime
-  if (Inf %in% calculated_pseudotime == FALSE){
       s.obj <- AddMetaData(
         object = s.obj,
-        metadata = calculated.pseudotime,
+        metadata = calculated_pseudotime,
         col.name = sprintf("pseudotime_%s", principal_node)
     )
       cat(sprintf("#### Principal point: %s \n", principal_node))
@@ -177,11 +182,7 @@ for (principal_node in list_of_principal_points){
         ggtitle(sprintf("Principal node: %s", principal_node))
       print(p)
       cat("\n \n")
-  } else {
-    remove.principal_points <- c(remove.principal_points, c(principal_node))
   }
-}
-list_of_principal_points <- setdiff(list_of_principal_points, remove.principal_points)
 ```
 
 ## Pseudotime on UMAP with cell cca.cluster.0.5 {.tabset}
@@ -218,41 +219,32 @@ sig_monocle.obj_graph_test_res %>% mutate_if(is.numeric, round, 6) %>% create_dt
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=18}
-# gt0.5_genes <- subset(sig_monocle.obj_graph_test_res, sig_monocle.obj_graph_test_res$morans_I >= 0.5)$gene_name
-# split.selected.genes <- split(gt0.5_genes, ceiling(seq_along(gt0.5_genes) / 9))
-# ```
-# 
-# ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=15, fig.width=20}
-# for (selected.starting.point in list_of_principal_points){
-#   cat(sprintf("## Genes that change as a function of pseudotime, starting point: %s \n", selected.starting.point))
-#   cat("### on UMAP {.tabset} \n")
-#   for (case in names(split.selected.genes)){
-#     cat(sprintf("#### Part %s \n", case))
-#     subset_monocle.obj <- monocle.obj[rowData(monocle.obj)$gene_short_name %in% split.selected.genes[[case]],]
-#     subset_monocle.obj <- order_cells(cds = subset_monocle.obj, reduction_method = "UMAP", root_pr_nodes = selected.starting.point)
-# 
-#     p1 <- plot_cells(cds = monocle.obj, genes = split.selected.genes[[case]],
-#                      cell_size = 2,
-#              show_trajectory_graph=FALSE,
-#              label_cell_groups=FALSE,
-#              label_leaves=FALSE) + scale_color_gradient(low = "#34eb77", high = "#eb3449")
-#     print(p1)
-#     cat("\n \n")
-#   }
-# 
-#   cat("\n \n")
-#   cat("### As a function {.tabset} \n")
-#   for (case in names(split.selected.genes)){
-#     cat(sprintf("#### Part %s \n", case))
-#     subset_monocle.obj <- monocle.obj[rowData(monocle.obj)$gene_short_name %in% split.selected.genes[[case]],]
-#     subset_monocle.obj <- order_cells(cds = subset_monocle.obj, reduction_method = "UMAP", root_pr_nodes = selected.starting.point)
-#     p2 <- plot_genes_in_pseudotime(color_cells_by="cca.cluster.0.5", cds_subset = subset_monocle.obj, min_expr = 0.5, horizontal_jitter = 0.1)
-#     print(p2)
-#     cat("\n \n")
-#   }
-# }
+gt0.5_genes <- subset(sig_monocle.obj_graph_test_res, sig_monocle.obj_graph_test_res$morans_I >= 0.5)$gene_name
+split.selected.genes <- split(gt0.5_genes, ceiling(seq_along(gt0.5_genes) / 9))
 ```
 
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=20}
+for (selected.starting.point in list_of_principal_points){
+  dir.create(file.path(path.to.save.output, "genes_change_as_functions_of_pseudotime", selected.starting.point), showWarnings = FALSE, recursive = TRUE)
+  for (input.gene in gt0.5_genes){
+    subset_monocle.obj <- monocle.obj[rowData(monocle.obj)$gene_short_name == input.gene, ]
+    subset_monocle.obj <- order_cells(cds = subset_monocle.obj, reduction_method = "UMAP", root_pr_nodes = selected.starting.point)
+
+    p1 <- plot_cells(cds = monocle.obj, genes = input.gene,
+                     cell_size = 2,
+             show_trajectory_graph=FALSE,
+             label_cell_groups=FALSE,
+             label_leaves=FALSE) + scale_color_gradient(low = "#34eb77", high = "#eb3449")
+    p2 <- plot_genes_in_pseudotime(color_cells_by="cca.cluster.0.5", cds_subset = subset_monocle.obj, min_expr = 0.5, horizontal_jitter = 0.1)
+    p <- p1 + p2
+    ggsave(plot = p, 
+           filename = sprintf("Gene_%s_Starting_node_%s.svg", input.gene, selected.starting.point),
+           path = file.path(path.to.save.output, "genes_change_as_functions_of_pseudotime", selected.starting.point),
+           width = 20, height = 10, device = "svg", dpi = 300)
+  }    
+}
+
+```
 
 # TradeSeq Test
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=14}
@@ -312,7 +304,6 @@ meta.data <- meta.data[row.names(s.obj@meta.data), ]
 for (tmp.col in colnames(cellWeights)){
   s.obj <- AddMetaData(object = s.obj, metadata = meta.data[[tmp.col]], col.name = tmp.col)
 }
-
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
@@ -354,6 +345,7 @@ if (file.exists(file.path(path.to.save.output, "sce.rds")) == FALSE){
   #> https://github.com/statOmics/tradeSeq/issues/73
   #> maybe the problem is from the structure of cellWeights, 
   #> there are some principal points that we cannot infer pseudotime. 
+  #> Changing to "use_partition = FALSE" solved the problem.
 
   gene.to.test <- intersect(row.names(input.GAM.counts), VariableFeatures(s.obj))
   tmp <- rowSums(input.GAM.counts)
@@ -428,7 +420,6 @@ if (file.exists(file.path(path.to.save.output, "tradeseq_test_res.rds")) == FALS
 } else {
   tradeseq.testres <- readRDS(file.path(path.to.save.output, "tradeseq_test_res.rds"))
 }
-
 ```
 
 ## All test results (table) {.tabset}

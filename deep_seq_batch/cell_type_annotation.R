@@ -19,5 +19,27 @@ all.annotations <-
       `15` = "pDCs",
       `16` = "CCR7+ DCs",
       `17` = "Plasma cells"
+    ),
+    SBharadwaj_20240318_Sample_1_4_7_8_2_5 = list(
+      `0` = "Monocytes and transitioning Mo",
+      `1` = "Misc. Myeloid cells",
+      `2` = "CD4+ T cells",
+      `3`= "ILC3s",
+      `4` = "Dividing cells",
+      `5` = "cDC1s",
+      `6`= "cDC2s",
+      `7` = "CD137L+ pre-migratory DCs",
+      `8`= "ILC2s",
+      `9` = "CCR7+ DCs",
+      `10` = "Macrophages",
+      `11` = "CD8s and Th1",
+      `12` = "FoxP3+ Tregs",
+      `13` = "Low ribosome T cells",
+      `14` = "Low ribosome ILC3s",
+      `15` = "pDCs",
+      `16` = "Th17 cells",
+      `17` = "Endothelial cells",
+      `18` = "Plasma cells",
+      `19` = "B cells"
     )
   )
