@@ -52,7 +52,7 @@ for (full.name in unique(samplesheet$full.dataset.name)){
   
   # write expression counts matrix
   library(Matrix)
-  counts_matrix <- GetAssayData(s.obj, assay='RNA', slot='data')
+  counts_matrix <- GetAssayData(s.obj, assay='SCT', slot='data')
   writeMM(counts_matrix, file=file.path(path.to.seurat2anndata, sprintf('counts_%s.mtx', object.name)))
   
   # write gene names
