@@ -2,6 +2,7 @@
 gc()
 rm(list = ls())
 
+library(scales)
 my_random_seed <- 42
 set.seed(my_random_seed)
 
@@ -58,4 +59,8 @@ for (full.name in unique(samplesheet$full.dataset.name)){
   # write gene names
   write.table( data.frame('gene'=rownames(counts_matrix)),file=file.path(path.to.seurat2anndata, sprintf('gene_names_%s.csv', object.name)),
                quote=F,row.names=F,col.names=F)
+  
+  coldf <- data.frame(cluster = unique(s.obj$cca.cluster.0.5),
+                      color = hue_pal()(length(unique(s.obj$cca.cluster.0.5))))
+  write.csv(coldf, file.path(path.to.seurat2anndata, sprintf('colordf_%s.csv', object.name)))
 }
