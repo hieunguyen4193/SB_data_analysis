@@ -41,7 +41,7 @@ for full_name in samplesheet["full_dataset_name"].unique():
     
     path_to_seurat2anndata = os.path.join(path_to_main_output, "09_output", "seurat2anndata")
 
-    object_name = f"Project_{full_name}.addedConditions"
+    object_name = f"{full_name}"
     print(os.path.join(path_to_seurat2anndata, "counts_{}.mtx".format(object_name)))
     X = io.mmread(os.path.join(path_to_seurat2anndata, "counts_{}.mtx".format(object_name)))
 
@@ -54,7 +54,7 @@ for full_name in samplesheet["full_dataset_name"].unique():
     # load gene names:
     with open(os.path.join(path_to_seurat2anndata, "gene_names_{}.csv".format(object_name)), 'r') as f:
         gene_names = f.read().splitlines()
-        
+
     # set anndata observations and index obs by barcodes, var by gene names
     adata.obs = cell_meta
     adata.obs.index = adata.obs['barcode']
