@@ -35,6 +35,7 @@ for (PROJECT in all.PROJECTS){
                              "s8_output", sprintf("%s.output.s8.rds", PROJECT)))
   s.obj <- subset(s.obj, Doublet_classifications == "Singlet")
   
+  ##### add Cell annotation
   cell.annotations <- all.annotations[[PROJECT]]
   
   meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>%
@@ -44,6 +45,16 @@ for (PROJECT in all.PROJECTS){
   
   meta.data <- meta.data[row.names(s.obj@meta.data), ]
   s.obj <- AddMetaData(object = s.obj, col.name = "cell.annotation", metadata = meta.data$cell.annotation)
+  
+  ##### add CONDITIONS
+  meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>% rowwise() %>%
+    mutate(condition = paste(str_split(name, "_")[[1]][1:3], collapse = "_")) %>%
+    mutate(sampletype = paste(str_split(name, "_")[[1]][2:3], collapse = "_")) %>%
+    column_to_rownames("barcode")
+  meta.data <- meta.data[row.names(s.obj@meta.data), ]
+  s.obj <- AddMetaData(object = s.obj, col.name = "condition", metadata = meta.data$condition)
+  s.obj <- AddMetaData(object = s.obj, col.name = "sampletype", metadata = meta.data$sampletype)
+  
   saveRDS(s.obj, 
           file.path(path.to.main.input, 
                     "s8_output", sprintf("%s.addedCellAnnotation.output.s8.rds", PROJECT)))

@@ -495,7 +495,7 @@ create_loupe_from_seurat(
     output_name = sprintf("PROJECT_%s_cloupe_converted_from_seurat", PROJECT),
     dedup_clusters = FALSE,
     executable_path = NULL,
-    force = FALSE
+    force = TRUE
     )
 ```
 
