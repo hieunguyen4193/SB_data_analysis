@@ -21,7 +21,7 @@ for (i in seq(1, nrow(samplesheet))){
   dataset_name <- samplesheet[i, "dataset_name"]
   sample1 <- samplesheet[i, "sample1"]
   sample2 <- samplesheet[i, "sample2"]
-  path.to.main.output <- file.path(outdir, PROJECT, "data_analysis_with_cell_annotation")
+  path.to.main.output <- file.path(outdir, PROJECT, "data_analysis_with_cell_annotations")
   path.to.02.output <- file.path(path.to.main.output, "02_output")
   dir.create(path.to.02.output, showWarnings = FALSE, recursive = TRUE)
   path.to.save.output <- file.path(path.to.02.output, dataset_name, sprintf("%s_vs_%s", sample1, sample2))
@@ -29,13 +29,13 @@ for (i in seq(1, nrow(samplesheet))){
   path.to.s.obj <- samplesheet[i, "path"]
   path.to.html.outputs <- file.path(outdir, 
                                     PROJECT, 
-                                    "html_output", 
+                                    "html_output_with_cell_annotations", 
                                     "02_output",
                                     dataset_name, 
                                     sprintf("%s_vs_%s", sample1, sample2))
   dir.create(path.to.html.outputs, showWarnings = FALSE, recursive = TRUE)
   
-  path.to.Rmd.file <- file.path(path.to.main.src, "02_DGE_analysis.Rmd")
+  path.to.Rmd.file <- file.path(path.to.main.src, "with_cell_type_annotation", "02_DGE_analysis.Rmd")
   html_name <- basename(path.to.Rmd.file) %>% str_replace(".Rmd", sprintf("DGE_%s_vs_%s.html", sample1, sample2))
   
   input.params <- list(sample1 = sample1,
