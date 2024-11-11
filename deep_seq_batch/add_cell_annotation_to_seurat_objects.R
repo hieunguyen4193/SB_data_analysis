@@ -30,10 +30,10 @@ all.PROJECTS <- c("SBharadwaj_20240318_Sample_1_4_7_8",
 
 for (PROJECT in all.PROJECTS){
   path.to.main.input <- file.path(outdir, PROJECT)
+  path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
+  path.to.01.output <- file.path(path.to.main.output, "01_output")
   
-  s.obj <- readRDS(file.path(path.to.main.input, 
-                             "s8_output", sprintf("%s.output.s8.rds", PROJECT)))
-  s.obj <- subset(s.obj, Doublet_classifications == "Singlet")
+  s.obj <- readRDS(file.path(path.to.01.output, sprintf("Project_%s.rds", PROJECT)))
   
   ##### add Cell annotation
   cell.annotations <- all.annotations[[PROJECT]]
@@ -55,7 +55,5 @@ for (PROJECT in all.PROJECTS){
   s.obj <- AddMetaData(object = s.obj, col.name = "condition", metadata = meta.data$condition)
   s.obj <- AddMetaData(object = s.obj, col.name = "sampletype", metadata = meta.data$sampletype)
   
-  saveRDS(s.obj, 
-          file.path(path.to.main.input, 
-                    "s8_output", sprintf("%s.addedCellAnnotation.output.s8.rds", PROJECT)))
+  saveRDS(s.obj, file.path(path.to.01.output, sprintf("Project_%s.addedCellAnnotation.rds", PROJECT)))
 }
