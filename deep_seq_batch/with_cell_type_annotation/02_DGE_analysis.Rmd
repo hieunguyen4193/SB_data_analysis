@@ -84,16 +84,16 @@ path.to.save.output <- params$path.to.save.output
 
 # sample1 <- "ctrl_gut_myeloid"
 # sample2 <- "treated_gut_myeloid"
-# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/06_output/v0.1/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5_v0.1.addedConditions.rds"
-# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/02_output/06_output_v0.1/ctrl_gut_myeloid_vs_treated_gut_myeloid"
+# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/01_output/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5.addedCellAnnotation.rds"
+# path.to.save.output <-  "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis_with_cell_annotations/02_output/full/ctrl_gut_myeloid_vs_treated_gut_myeloid"
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 
 library(clusterProfiler)
-if (packageVersion("org.Mm.eg.db") != "3.19.1"){
-  install.packages("https://bioconductor.org/packages/release/bioc/src/contrib/AnnotationDbi_1.66.0.tar.gz", 
+if (packageVersion("org.Mm.eg.db") != "3.20.0"){
+  install.packages("https://bioconductor.org/packages/release/bioc/src/contrib/AnnotationDbi_1.68.0.tar.gz", 
                    type = "source", repos = NULL)
-  install.packages("https://bioconductor.org/packages/release/data/annotation/src/contrib/org.Mm.eg.db_3.19.1.tar.gz", 
+  install.packages("https://bioconductor.org/packages/release/data/annotation/src/contrib/org.Mm.eg.db_3.20.0.tar.gz", 
                    type = "source", repos = NULL)
 }
 library(org.Mm.eg.db)
@@ -207,8 +207,9 @@ de.markers[[sprintf("cluster_%s", 0)]] %>% create_dt()
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-all.clusters.in.de.markers <- sort(to_vec( for (item in names(de.markers)) as.numeric(str_split(item, "_")[[1]][[2]]) ))
-all.clusters.in.de.markers <- to_vec( for(item in all.clusters.in.de.markers) sprintf("cluster_%s", item))
+# all.clusters.in.de.markers <- sort(to_vec( for (item in names(de.markers)) as.numeric(str_split(item, "_")[[1]][[2]]) ))
+# all.clusters.in.de.markers <- to_vec( for(item in all.clusters.in.de.markers) sprintf("cluster_%s", item))
+all.clusters.in.de.markers <- names(de.markers)
 for (cluster.id in all.clusters.in.de.markers){
   tmp <- de.markers[[cluster.id]] %>% mutate_if(is.numeric, round, 5) 
   cat(paste("\n\n###", cluster.id, "##\n"))
@@ -296,7 +297,7 @@ for (cluster.id in all.clusters.in.de.markers){
     top10down.genes <- inputdf %>% subset(p_val_adj <= 0.05 & avg_log2FC < 0) %>% arrange(desc(avg_log2FC)) %>% tail(20)
     
     if (length(c(top10up.genes$Gene, top10down.genes$Gene)) > 1){
-      p <- DoHeatmap(object = subset(s.obj, cell.annotation == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
+      p <- DoHeatmap(object = subset(s.obj, cell.annotation == str_replace(cluster.id, "cluster_", "")), 
                      features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = "condition", assay = "SCT") + 
         scale_fill_gradientn(colours = rev(mapal))
     } else {
@@ -330,10 +331,10 @@ cat("List of significantly differentially expressed genes between 2 samples \n")
 
 all.cluster.ids <- unique(diff.markers.df$cluster)
 
-all.cluster.ids.idx <- sort(to_vec(for (item in all.cluster.ids)
-  as.numeric(str_replace(item, "cluster_", ""))))
-all.cluster.ids <- to_vec(for (item in all.cluster.ids.idx)
-  sprintf("cluster_%s", item))
+# all.cluster.ids.idx <- sort(to_vec(for (item in all.cluster.ids)
+#   as.numeric(str_replace(item, "cluster_", ""))))
+# all.cluster.ids <- to_vec(for (item in all.cluster.ids.idx)
+#   sprintf("cluster_%s", item))
 
 for(cluster.id in all.cluster.ids){
   df.cluster.id <- subset(diff.markers.df, diff.markers.df$cluster == cluster.id) %>% mutate_if(is.numeric, round, 6)
@@ -364,7 +365,6 @@ diff.markers.df %>% create_dt()
 ```
 
 ```{r echo=FALSE, warning=FALSE, results='asis'}
-
 for(cluster.id in all.cluster.ids){
   df.cluster.id <- subset(diff.markers.df, diff.markers.df$cluster == cluster.id & diff.markers.df$p_val_adj <= 0.05) %>% mutate_if(is.numeric, round, 6)
   cat(paste("\n\n### Cluster: ", cluster.id, "##\n"))

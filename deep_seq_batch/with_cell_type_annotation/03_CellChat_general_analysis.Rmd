@@ -63,10 +63,11 @@ path.to.save.output <- params$path.to.save.output
 filter10cells <- params$filter10cells
 chosen.group <- params$chosen.group
 
-# sample.id <- "d7_SPF"
-# path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/all.samples/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
+# sample.id <- "ctrl_gut_CD45"
+# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/01_output/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5.addedCellAnnotation.rds"
 # filter10cells <- "Filter10"
-# path.to.save.output <- file.path("/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/all.samples", filter10cells, sample.id)
+# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis_with_cell_annotations/03_output/full/ctrl_gut_CD45_1"
+# chosen.group <- "condition"
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 s.obj <- readRDS(path.to.s.obj)
@@ -124,7 +125,7 @@ meta.data <- s.obj@meta.data %>%
   column_to_rownames("barcode")
 num.cluster <- length(unique(s.obj$cell.annotation))
 
-all.cluster.idx <- to_vec (for (cluster.id in unique(s.obj$cell.annotation)) str_replace(cluster.id, "cluster_", "")) %>% as.numeric()
+all.cluster.idx <- to_vec (for (cluster.id in unique(s.obj$cell.annotation)) str_replace(cluster.id, "cluster_", "")) 
 
 meta.data$cluster <- factor(meta.data$cluster, levels = to_vec ( for (i in sort(all.cluster.idx)) sprintf("cluster_%s", i) ))
 cellchat <- createCellChat(object = data.input, meta = meta.data, group.by = "cluster")
