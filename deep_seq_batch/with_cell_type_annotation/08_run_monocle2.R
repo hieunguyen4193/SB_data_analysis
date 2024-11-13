@@ -45,7 +45,7 @@ for (full.name in unique(samplesheet$full.dataset.name)){
                                    sprintf("%s.%s.monocle2.rds", 
                                            PROJECT, 
                                            dataset_name))
-  path.to.08.output <- file.path(path.to.main.output, "08_outut", 
+  path.to.08.output <- file.path(path.to.main.output, "08_output", 
                                  "monocle_output", sprintf("%s.%s.monocle2",
                                                            PROJECT,
                                                            dataset_name))
