@@ -70,14 +70,14 @@ path.to.save.output <- params$path.to.save.output
 filter10cells <- params$filter10cells
 chosen.group <- params$chosen.group
 
-# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/01_output/Project_SBharadwaj_20240318_Sample_1_4_7_8.addedConditions.rds"
+# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis_with_cell_annotations/06_output/v0.1/Project_SBharadwaj_20240318_Sample_1_4_7_8_v0.1.rds"
 # sample1 <- "ctrl_gut_CD45"
-# path.to.cellchat1 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/Monocyte_Macrophages/ctrl_gut_myeloid/CellChat_object.ctrl_gut_myeloid.Filter10.rds"
+# path.to.cellchat1 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis_with_cell_annotations/03_output/v0.1/ctrl_gut_CD45/CellChat_object.ctrl_gut_CD45.Filter10.rds"
 # sample2 <- "treated_gut_CD45"
-# path.to.cellchat2 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/full/treated_gut_CD45/CellChat_object.treated_gut_CD45.Filter10.rds"
-# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SeuratV5/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/full/ctrl_gut_CD45_vs_treated_gut_CD45"
+# path.to.cellchat2 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis_with_cell_annotations/03_output/v0.1/treated_gut_CD45/CellChat_object.treated_gut_CD45.Filter10.rds"
+# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis_with_cell_annotations/03_output/v0.1/ctrl_gut_CD45_vs_treated_gut_CD45"
 # filter10cells <- "Filter10"
-# chosen.group <- "name"
+# chosen.group <- "condition"
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 ```
@@ -622,15 +622,15 @@ for (group in names(groups)){
 ```
 
 # Compare the signaling gene expression distribution between different datasets
-```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=14}
+source("/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch/with_cell_type_annotation/plot_gene_expression_from_Cellchat.R")
 for (group in names(groups)){
   cat(sprintf("## Group %s {.tabset} \n \n", group))
   cat("\n \n")
   for (pathway in groups[[group]]){
     cat(sprintf("### Pathway: %s \n", pathway))
     cellchat@meta$datasets = factor(cellchat@meta$datasets, levels = c(sample1, sample2)) # set factor level
-    p <- plotGeneExpression(cellchat, signaling = pathway, split.by = "datasets", colors.ggplot = T)
+    p <- plotGeneExpression(cellchat, signaling = pathway, split.by = "datasets", colors.ggplot = T, type = "violin")
     print(p)
     cat("\n \n")
   }

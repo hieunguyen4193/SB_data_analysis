@@ -54,16 +54,18 @@ package_loading_Status_bioc <- lapply(bioc.packages,
 ##### MAIN FUNCTIONS
 #####----------------------------------------------------------------------#####
 
+# path to the RDS file
 path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/01_output/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5.addedCellAnnotation.rds"
+
+# path to save output svg file
 path.to.save.output <- "/home/hieunguyen/CRC1382/outdir/tmp"
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 
 s.obj <- readRDS(path.to.s.obj)
 
-# Idents(s.obj) <- "cca.cluster.0.5" # <<<< CHANGE HERE to use cluster number. 
+# Idents(s.obj) <- "cca.cluster.0.5" # <<<< CHANGE HERE to use cluster number.
 Idents(s.obj) <- "cell.annotation" # <<<<< CHANGE HERE to switch to cell annotation
 # update 12.11.2024: cell annotation available only in samples 1 4 7 8 2 5 and 1 4 7 8. 
-
 
 # set default assay =  SCT
 DefaultAssay(s.obj) < "SCT"
@@ -78,7 +80,9 @@ plot.genes <- c("Cox20",
 umap.plot <- DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, repel = TRUE, pt.size = 1)
 
 ##### UMAP plot, splitted by conditions
-umap.plot.conditions <- DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = FALSE, repel = TRUE, split.by = "condition", ncol = 2, pt.size = 1)
+umap.plot.conditions <- DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = FALSE, repel = TRUE, split.by = "condition", ncol = 2, 
+                                pt.size = 1, 
+                                label.size = 12)
 
 ##### UMAP plot, splitted by samples
 umap.plot.sample <- DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = FALSE, repel = TRUE, split.by = "name", ncol = 2, pt.size = 1)
@@ -92,7 +96,12 @@ violin.plot <- VlnPlot(object = s.obj, features = plot.genes, ncol = 2, pt.size 
 ##### violin plot, multiple samples
 violin.plot.condition1 <- VlnPlot(object = s.obj, features = plot.genes, ncol = 2, pt.size = 1, split.by = "condition")  # set pt.size = 0 to remove points on violin plots
 violin.plot.condition2 <- VlnPlot(object = s.obj, features = plot.genes, ncol = 2, pt.size = 1, group.by = "condition")  # set pt.size = 0 to remove points on violin plots
+violin.plot.condition3 <- VlnPlot(object = s.obj, features = plot.genes, ncol = 2, pt.size = 1, group.by = "name")
 
 ##### save function
 choose_your_filename <- "test.svg"
-ggsave(plot = umap.plot.conditions, filename = choose_your_filename, path = path.to.save.output, device = "svg", width = 14, height = 10, dpi = 300)
+ggsave(plot = umap.plot.sample, filename = choose_your_filename, path = path.to.save.output, device = "svg", width = 14, height = 10, dpi = 300)
+
+
+unique(s.obj$name)
+unique(s.obj$condition)

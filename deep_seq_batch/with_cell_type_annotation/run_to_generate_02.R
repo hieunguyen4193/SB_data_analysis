@@ -14,7 +14,7 @@ outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"
 
 ##### read the sample sheet containing paths to seurat object with cell annotations.
-samplesheet <- read.csv("/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch/SampleSheet_for_DGE_CellChat.CellAnnotated.csv")
+samplesheet <- read.csv("/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch/with_cell_type_annotation/SampleSheet_for_DGE_CellChat.CellAnnotated.csv")
 
 for (i in seq(1, nrow(samplesheet))){
   PROJECT <- samplesheet[i, "PROJECT"]

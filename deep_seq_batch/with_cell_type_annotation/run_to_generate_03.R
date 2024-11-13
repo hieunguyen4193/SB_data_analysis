@@ -10,7 +10,7 @@ outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"
 
-samplesheet <- read.csv("/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch/SampleSheet_for_DGE_CellChat.CellAnnotated.csv")
+samplesheet <- read.csv("/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch/with_cell_type_annotation/SampleSheet_for_DGE_CellChat.CellAnnotated.csv")
 
 all.s.objs <- unique(samplesheet$path)
 sample.list <- list(
