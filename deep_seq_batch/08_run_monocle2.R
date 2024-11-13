@@ -64,7 +64,7 @@ for (full.name in unique(samplesheet$full.dataset.name)){
   }
   
   ##### plot cell trajectory, color by seurat clusters
-  p <- plot_cell_trajectory(monocle.obj, color_by = "seurat_clusters")
+  p <- plot_cell_trajectory(monocle.obj, color_by = "cca.cluster.0.5")
   ggsave(plot = p, 
          filename = sprintf("cell_trajectory_%s.seurat_clsuters.svg", full.name), 
          path = path.to.08.output, 
