@@ -34,39 +34,39 @@ samplesheet = samplesheet[~samplesheet["full_dataset_name"].duplicated()]
 
 for full_name in samplesheet["full_dataset_name"].unique():
   print(f"Working on dataset {full_name}")
-project = samplesheet[samplesheet["full_dataset_name"] == full_name]["PROJECT"].values[0]
-dataset_name = samplesheet[samplesheet["full_dataset_name"] == full_name]["dataset_name"].values[0]
-path_to_input_s_obj = samplesheet[samplesheet["full_dataset_name"] == full_name]["path"].values[0]
-path_to_main_output = os.path.join(outdir, project, "data_analysis_with_cell_annotations")
+  project = samplesheet[samplesheet["full_dataset_name"] == full_name]["PROJECT"].values[0]
+  dataset_name = samplesheet[samplesheet["full_dataset_name"] == full_name]["dataset_name"].values[0]
+  path_to_input_s_obj = samplesheet[samplesheet["full_dataset_name"] == full_name]["path"].values[0]
+  path_to_main_output = os.path.join(outdir, project, "data_analysis_with_cell_annotations")
 
-path_to_seurat2anndata = os.path.join(path_to_main_output, "09_output", "seurat2anndata")
+  path_to_seurat2anndata = os.path.join(path_to_main_output, "09_output", "seurat2anndata")
 
-object_name = f"{full_name}"
-print(os.path.join(path_to_seurat2anndata, "counts_{}.mtx".format(object_name)))
-X = io.mmread(os.path.join(path_to_seurat2anndata, "counts_{}.mtx".format(object_name)))
+  object_name = f"{full_name}"
+  print(os.path.join(path_to_seurat2anndata, "counts_{}.mtx".format(object_name)))
+  X = io.mmread(os.path.join(path_to_seurat2anndata, "counts_{}.mtx".format(object_name)))
 
-# create anndata object
-adata = anndata.AnnData(X=X.transpose().tocsr())
+  # create anndata object
+  adata = anndata.AnnData(X=X.transpose().tocsr())
 
-# load cell metadata:
-cell_meta = pd.read_csv(os.path.join(path_to_seurat2anndata, "metadata_{}.csv".format(object_name)))
+  # load cell metadata:
+  cell_meta = pd.read_csv(os.path.join(path_to_seurat2anndata, "metadata_{}.csv".format(object_name)))
 
-# load gene names:
-with open(os.path.join(path_to_seurat2anndata, "gene_names_{}.csv".format(object_name)), 'r') as f:
-  gene_names = f.read().splitlines()
+  # load gene names:
+  with open(os.path.join(path_to_seurat2anndata, "gene_names_{}.csv".format(object_name)), 'r') as f:
+    gene_names = f.read().splitlines()
 
-# set anndata observations and index obs by barcodes, var by gene names
-adata.obs = cell_meta
-adata.obs.index = adata.obs['barcode']
-adata.var.index = gene_names
+  # set anndata observations and index obs by barcodes, var by gene names
+  adata.obs = cell_meta
+  adata.obs.index = adata.obs['barcode']
+  adata.var.index = gene_names
 
-# load dimensional reduction:
-pca = pd.read_csv(os.path.join(path_to_seurat2anndata, "pca_{}.csv".format(object_name)))
-pca.index = adata.obs.index
+  # load dimensional reduction:
+  pca = pd.read_csv(os.path.join(path_to_seurat2anndata, "pca_{}.csv".format(object_name)))
+  pca.index = adata.obs.index
 
-# set pca and umap
-adata.obsm['X_pca'] = pca.to_numpy()
-adata.obsm['X_umap'] = np.vstack((adata.obs['UMAP_1'].to_numpy(), adata.obs['UMAP_2'].to_numpy())).T
+  # set pca and umap
+  adata.obsm['X_pca'] = pca.to_numpy()
+  adata.obsm['X_umap'] = np.vstack((adata.obs['UMAP_1'].to_numpy(), adata.obs['UMAP_2'].to_numpy())).T
 
-# save dataset as anndata format
-adata.write(os.path.join(path_to_seurat2anndata, '{}.h5ad'.format(object_name)))
+  # save dataset as anndata format
+  adata.write(os.path.join(path_to_seurat2anndata, '{}.h5ad'.format(object_name)))
