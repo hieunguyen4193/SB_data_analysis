@@ -34,7 +34,10 @@ if ("svglite" %in% installed.packages() == FALSE){
   install.packages("svglite")
 }
 
-for (full.name in unique(samplesheet$full.dataset.name)){
+# for (full.name in unique(samplesheet$full.dataset.name)){
+for (full.name in c("SBharadwaj_20240318_Sample_3_6_07_output_v0.1.1",
+                    "SBharadwaj_20240318_Sample_3_6_06_output_v0.1",
+                    "SBharadwaj_20240318_Sample_3_6_full" )){
   print(sprintf("Working on dataset %s", full.name))
   PROJECT <- subset(samplesheet, samplesheet$full.dataset.name == full.name)$PROJECT
   
