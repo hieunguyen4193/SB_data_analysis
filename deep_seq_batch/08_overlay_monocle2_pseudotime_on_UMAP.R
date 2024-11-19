@@ -43,6 +43,7 @@ for (full.name in unique(samplesheet$full.dataset.name)){
     meta.data <- merge(meta.data, monocle.reversedf, by.x = "barcode", by.y = "barcode") 
     meta.data <- meta.data %>% column_to_rownames("barcode")
     meta.data <- meta.data[row.names(s.obj@meta.data),]
+    
     s.obj <- AddMetaData(object = s.obj, metadata = meta.data$pseudotime, col.name = "pseudotime")
     s.obj <- AddMetaData(object = s.obj, metadata = meta.data$rev.pseudotime, col.name = "rev.pseudotime")
     s.obj <- AddMetaData(object = s.obj, metadata = meta.data$state, col.name = "state")

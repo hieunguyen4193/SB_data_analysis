@@ -39,10 +39,10 @@ for (full.name in unique(samplesheet$full.dataset.name)){
     
     s.obj$barcode <- colnames(s.obj)
     
-    s.obj$UMAP_1 <- s.obj@reductions$integrated.cca@cell.embeddings[,1]
-    s.obj$UMAP_2 <- s.obj@reductions$integrated.cca@cell.embeddings[,2]
+    s.obj$UMAP_1 <- s.obj@reductions$cca_UMAP@cell.embeddings[,1]
+    s.obj$UMAP_2 <- s.obj@reductions$cca_UMAP@cell.embeddings[,2]
     
-    write.csv(s.obj@reductions$integrated.cca@cell.embeddings, 
+    write.csv(s.obj@reductions$cca_UMAP@cell.embeddings, 
               file=file.path(path.to.seurat2anndata, sprintf('pca_%s.csv', full.name)), 
               quote=F, 
               row.names=F)

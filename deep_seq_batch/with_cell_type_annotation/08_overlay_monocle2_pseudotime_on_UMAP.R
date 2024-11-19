@@ -25,13 +25,12 @@ samplesheet <- samplesheet %>% rowwise() %>%
 samplesheet <- samplesheet[!duplicated(samplesheet$full.dataset.name), ]
 
 for (full.name in unique(samplesheet$full.dataset.name)){
-  # full.name <- unique(samplesheet$full.dataset.name)[[1]]
   
   print(sprintf("Working on dataset %s", full.name))
   PROJECT <- subset(samplesheet, samplesheet$full.dataset.name == full.name)$PROJECT
   dataset_name <- subset(samplesheet, samplesheet$full.dataset.name == full.name)$dataset_name
   path.to.input.s.obj <- subset(samplesheet, samplesheet$full.dataset.name == full.name)$path
-  path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
+  path.to.main.output <- file.path(outdir, PROJECT, "data_analysis_with_cell_annotations")
   path.to.monocle2.input <- file.path(path.to.main.output, "08_output", "monocle2_input")
   path.to.08.output <- file.path(path.to.main.output, "08_output", "monocle_output", sprintf("%s.%s.monocle2", PROJECT, dataset_name))
   dir.create(path.to.monocle2.input, showWarnings = FALSE, recursive = TRUE)
@@ -51,7 +50,7 @@ for (full.name in unique(samplesheet$full.dataset.name)){
   s.obj <- AddMetaData(object = s.obj, metadata = meta.data$state, col.name = "state")
   s.obj <- AddMetaData(object = s.obj, metadata = meta.data$rev.state, col.name = "rev.state")
   
-  Idents(s.obj) <- "cell_annotation"
+  Idents(s.obj) <- "cell.annotation"
   
   umap.pseudotime <- FeaturePlot(object = s.obj, reduction = "cca_UMAP", features = c("pseudotime"), label = TRUE)
   umap.rev.pseudotime <- FeaturePlot(object = s.obj, reduction = "cca_UMAP", features = c("rev.pseudotime"), label = TRUE)
