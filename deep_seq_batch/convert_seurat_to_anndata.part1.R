@@ -25,6 +25,7 @@ samplesheet <- samplesheet %>% rowwise() %>%
 samplesheet <- samplesheet[!duplicated(samplesheet$full.dataset.name), ]
 
 for (full.name in unique(samplesheet$full.dataset.name)){
+  print("generating ...")
   print(sprintf("Working on dataset %s", full.name))
   PROJECT <- subset(samplesheet, samplesheet$full.dataset.name == full.name)$PROJECT
   dataset_name <- subset(samplesheet, samplesheet$full.dataset.name == full.name)$dataset_name

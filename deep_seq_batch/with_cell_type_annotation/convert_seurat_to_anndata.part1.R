@@ -35,6 +35,7 @@ for (full.name in unique(samplesheet$full.dataset.name)){
   dir.create(path.to.seurat2anndata, showWarnings = FALSE, recursive = TRUE)
   
   if (file.exists(file.path(path.to.seurat2anndata, sprintf("%s.csv", full.name))) == FALSE){
+    print("generating ...")
     s.obj <- readRDS(path.to.input.s.obj)
     
     s.obj$barcode <- colnames(s.obj)
