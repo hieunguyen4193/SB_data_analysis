@@ -13,12 +13,12 @@ source(file.path(path.to.project.src, "sub_clustering_indices.continued_from_06.
 #####----------------------------------------------------------------------#####
 # CONFIGURATIONS AND PREPRATIONS
 #####----------------------------------------------------------------------#####
-outdir <- "/home/hieunguyen/CRC1382/outdir"
-PROJECT <- "SBharadwaj_20240318_Sample_3_6"
+outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
+PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8"
 sub.cluster.idx <- "v0.1"
 
 for (cont.sub.cluster.idx in names(sub_clusters[[PROJECT]][[sub.cluster.idx]])){
-  path.to.main.input <- file.path(outdir, "SeuratV5", PROJECT)
+  path.to.main.input <- file.path(outdir, PROJECT)
   path.to.main.output <- file.path(path.to.main.input, "data_analysis")
   path.to.06.output <- file.path(path.to.main.output, "06_output", sub.cluster.idx)
   

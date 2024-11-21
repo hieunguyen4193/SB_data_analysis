@@ -53,4 +53,3 @@ for (i in seq(1, nrow(samplesheet))){
     print(sprintf("File %s exists", file.path(path.to.html.outputs, html_name)))
   }
 }
-
