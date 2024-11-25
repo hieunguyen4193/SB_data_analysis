@@ -31,22 +31,30 @@ for (full.name in unique(samplesheet$full.dataset.name)){
   path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
   path.to.monocle2.input <- file.path(path.to.main.output, "08_output", "monocle2_input")
   dir.create(path.to.monocle2.input, showWarnings = FALSE, recursive = TRUE)
-  
-  s.obj <- readRDS(path.to.input.s.obj)
-  
-  data <- GetAssayData(s.obj, slot = "data", assay = "SCT")
-  
-  pd <- new('AnnotatedDataFrame', data = s.obj@meta.data)
-  
-  fd <- data.frame(gene_short_name = row.names(data), row.names = row.names(data))
-  fd <- new('AnnotatedDataFrame', data = fd)
-  
-  library(monocle)
-  monocle.obj <- newCellDataSet(data,
-                                phenoData = pd,
-                                featureData = fd,
-                                lowerDetectionLimit = 0.5,
-                                expressionFamily = negbinomial.size())
-  saveRDS(monocle.obj, file.path(path.to.monocle2.input, 
-                                 sprintf("%s.%s.monocle2.rds", PROJECT, dataset_name)))
+  if (file.exists(file.path(path.to.monocle2.input, 
+                            sprintf("%s.%s.monocle2.rds", PROJECT, dataset_name))) == FALSE){
+    print(sprintf("File %s does not exists, generating ...",
+                  file.path(path.to.monocle2.input, 
+                            sprintf("%s.%s.monocle2.rds", PROJECT, dataset_name))))
+    s.obj <- readRDS(path.to.input.s.obj)
+    
+    data <- GetAssayData(s.obj, slot = "data", assay = "SCT")
+    
+    pd <- new('AnnotatedDataFrame', data = s.obj@meta.data)
+    
+    fd <- data.frame(gene_short_name = row.names(data), row.names = row.names(data))
+    fd <- new('AnnotatedDataFrame', data = fd)
+    
+    library(monocle)
+    monocle.obj <- newCellDataSet(data,
+                                  phenoData = pd,
+                                  featureData = fd,
+                                  lowerDetectionLimit = 0.5,
+                                  expressionFamily = negbinomial.size())
+    saveRDS(monocle.obj, file.path(path.to.monocle2.input, 
+                                   sprintf("%s.%s.monocle2.rds", PROJECT, dataset_name)))
+  } else {
+    print(sprintf("File %s exists", file.path(path.to.monocle2.input, 
+                                              sprintf("%s.%s.monocle2.rds", PROJECT, dataset_name))))
+  }
 }

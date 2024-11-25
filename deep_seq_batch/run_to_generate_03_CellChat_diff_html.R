@@ -38,6 +38,11 @@ for (i in seq(1, nrow(samplesheet))){
     } else {
       chosen.group <- "name"
     }
+    
+    print(sprintf("PROJECT: %s", PROJECT))
+    print(sprintf("Sample1: %s vs Sample2: %s", sample1, sample2))
+    print(sprintf("Dataset name: %s", dataset_name))
+    
     path.to.html.outputs <- file.path(outdir,
                                       PROJECT,
                                       "html_output",
