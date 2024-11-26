@@ -35,22 +35,23 @@ if ("svglite" %in% installed.packages() == FALSE){
 }
 
 for (full.name in unique(samplesheet$full.dataset.name)){
+  print(sprintf("Working on dataset %s", full.name))
+  PROJECT <- subset(samplesheet, samplesheet$full.dataset.name == full.name)$PROJECT
+  
+  path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
+  dataset_name <- subset(samplesheet, samplesheet$full.dataset.name == full.name)$dataset_name
+  path.to.monocle2.input <- file.path(path.to.main.output, "08_output", "monocle2_input")
+  path.to.monocle.obj <- file.path(path.to.monocle2.input, 
+                                   sprintf("%s.%s.monocle2.rds", 
+                                           PROJECT, 
+                                           dataset_name))
+  path.to.08.output <- file.path(path.to.main.output, "08_output", 
+                                 "monocle_output", sprintf("%s.%s.monocle2",
+                                                           PROJECT,
+                                                           dataset_name))
+  dir.create(path.to.08.output, showWarnings = FALSE, recursive =TRUE)
+  
   if (file.exists(file.path(path.to.08.output, "monocledf.rev.csv")) == FALSE){
-    print(sprintf("Working on dataset %s", full.name))
-    PROJECT <- subset(samplesheet, samplesheet$full.dataset.name == full.name)$PROJECT
-    
-    path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
-    dataset_name <- subset(samplesheet, samplesheet$full.dataset.name == full.name)$dataset_name
-    path.to.monocle2.input <- file.path(path.to.main.output, "08_output", "monocle2_input")
-    path.to.monocle.obj <- file.path(path.to.monocle2.input, 
-                                     sprintf("%s.%s.monocle2.rds", 
-                                             PROJECT, 
-                                             dataset_name))
-    path.to.08.output <- file.path(path.to.main.output, "08_output", 
-                                   "monocle_output", sprintf("%s.%s.monocle2",
-                                                             PROJECT,
-                                                             dataset_name))
-    dir.create(path.to.08.output, showWarnings = FALSE, recursive =TRUE)
     
     print("reading monocle object saved from the seurat data object")
     monocle.obj <- readRDS(path.to.monocle.obj)

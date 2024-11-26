@@ -61,23 +61,23 @@ scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
-path.to.s.obj <- params$path.to.s.obj
-sample1 <- params$sample1
-path.to.cellchat1 <- params$path.to.cellchat1
-sample2 <- params$sample2
-path.to.cellchat2 <- params$path.to.cellchat2
-path.to.save.output <- params$path.to.save.output
-filter10cells <- params$filter10cells
-chosen.group <- params$chosen.group
+# path.to.s.obj <- params$path.to.s.obj
+# sample1 <- params$sample1
+# path.to.cellchat1 <- params$path.to.cellchat1
+# sample2 <- params$sample2
+# path.to.cellchat2 <- params$path.to.cellchat2
+# path.to.save.output <- params$path.to.save.output
+# filter10cells <- params$filter10cells
+# chosen.group <- params$chosen.group
 
-# path.to.s.obj <-"/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/07_output/v0.1/Monocyte_Macrophages/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5_v0.1_Monocyte_Macrophages.addedConditions.rds"
-# sample1 <- "treated_gut_myeloid"
-# path.to.cellchat1 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/Monocyte_Macrophages/treated_gut_myeloid/CellChat_object.treated_gut_myeloid.Filter10.rds"
-# sample2 <- "ctrl_gut_myeloid"
-# path.to.cellchat2 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/Monocyte_Macrophages/ctrl_gut_myeloid/CellChat_object.ctrl_gut_myeloid.Filter10.rds"
-# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/Monocyte_Macrophages/treated_gut_myeloid_vs_ctrl_gut_myeloid"
-# filter10cells <- "Filter10"
-# chosen.group <- "name"
+path.to.s.obj <-"/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/07_output/v0.1/DC/s8_output/SBharadwaj_20240318_Sample_1_4_7_8_DC.output.s8.addedConditions.rds"
+sample1 <- "treated_gut_CD45"
+path.to.cellchat1 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/Monocyte_Macrophages/treated_gut_CD45/CellChat_object.treated_gut_CD45.Filter10.rds"
+sample2 <- "ctrl_gut_CD45"
+path.to.cellchat2 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/Monocyte_Macrophages/ctrl_gut_CD45/CellChat_object.ctrl_gut_CD45.Filter10.rds"
+path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/Monocyte_Macrophages/treated_gut_CD45_vs_ctrl_gut_CD45"
+filter10cells <- "Filter10"
+chosen.group <- "condition"
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 ```
@@ -628,7 +628,7 @@ for (group in names(groups)){
   cat("\n \n")
   for (pathway in groups[[group]]){
     cat(sprintf("### Pathway: %s \n", pathway))
-    cellchat@meta$datasets = factor(cellchat@meta$datasets, levels = c(sample1, sample2)) # set factor level
+    cellchat@meta$datasets <- factor(cellchat@meta$datasets, levels = c(sample1, sample2)) # set factor level
     p <- plotGeneExpression(cellchat, signaling = pathway, split.by = "datasets", colors.ggplot = T)
     print(p)
     cat("\n \n")

@@ -26,3 +26,6 @@ for (file in all.s.obj){
     print(sprintf("%s exists", str_replace(file, ".rds", ".addedConditions.rds")))
   }
 }
+
+
+s.obj <- readRDS(samplesheet$path[[1]])
