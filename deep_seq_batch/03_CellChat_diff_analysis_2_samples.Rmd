@@ -61,23 +61,23 @@ scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
-# path.to.s.obj <- params$path.to.s.obj
-# sample1 <- params$sample1
-# path.to.cellchat1 <- params$path.to.cellchat1
-# sample2 <- params$sample2
-# path.to.cellchat2 <- params$path.to.cellchat2
-# path.to.save.output <- params$path.to.save.output
-# filter10cells <- params$filter10cells
-# chosen.group <- params$chosen.group
+path.to.s.obj <- params$path.to.s.obj
+sample1 <- params$sample1
+path.to.cellchat1 <- params$path.to.cellchat1
+sample2 <- params$sample2
+path.to.cellchat2 <- params$path.to.cellchat2
+path.to.save.output <- params$path.to.save.output
+filter10cells <- params$filter10cells
+chosen.group <- params$chosen.group
 
-path.to.s.obj <-"/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/07_output/v0.1/DC/s8_output/SBharadwaj_20240318_Sample_1_4_7_8_DC.output.s8.addedConditions.rds"
-sample1 <- "treated_gut_CD45"
-path.to.cellchat1 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/Monocyte_Macrophages/treated_gut_CD45/CellChat_object.treated_gut_CD45.Filter10.rds"
-sample2 <- "ctrl_gut_CD45"
-path.to.cellchat2 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/Monocyte_Macrophages/ctrl_gut_CD45/CellChat_object.ctrl_gut_CD45.Filter10.rds"
-path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/Monocyte_Macrophages/treated_gut_CD45_vs_ctrl_gut_CD45"
-filter10cells <- "Filter10"
-chosen.group <- "condition"
+# path.to.s.obj <-"/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/07_output/v0.1/DC/s8_output/SBharadwaj_20240318_Sample_1_4_7_8_DC.output.s8.addedConditions.rds"
+# sample1 <- "treated_gut_CD45"
+# path.to.cellchat1 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/Monocyte_Macrophages/treated_gut_CD45/CellChat_object.treated_gut_CD45.Filter10.rds"
+# sample2 <- "ctrl_gut_CD45"
+# path.to.cellchat2 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/Monocyte_Macrophages/ctrl_gut_CD45/CellChat_object.ctrl_gut_CD45.Filter10.rds"
+# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/Monocyte_Macrophages/treated_gut_CD45_vs_ctrl_gut_CD45"
+# filter10cells <- "Filter10"
+# chosen.group <- "condition"
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 ```
@@ -622,7 +622,7 @@ for (group in names(groups)){
 
 # Compare the signaling gene expression distribution between different datasets
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-
+source("/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch/with_cell_type_annotation/plot_gene_expression_from_Cellchat.R")
 for (group in names(groups)){
   cat(sprintf("## Group %s {.tabset} \n \n", group))
   cat("\n \n")
