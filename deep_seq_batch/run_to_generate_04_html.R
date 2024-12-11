@@ -42,14 +42,16 @@ if ("monocle" %in% installed.packages()){
 library(monocle3)
 path.to.rmd <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch/04_run_monocle3.Rmd"
 
-parser <- ArgumentParser()
-
-parser$add_argument("-i", "--full_name", action="store",
-                    help="Full name of the input project/dataset name")
-
-args <- parser$parse_args()
-
-full.name <- args$full_name
+# parser <- ArgumentParser()
+# 
+# parser$add_argument("-i", "--full_name", action="store",
+#                     help="Full name of the input project/dataset name")
+# 
+# args <- parser$parse_args()
+# 
+# full.name <- args$full_name
+# full.name <- "SBharadwaj_20240318_Sample_1_4_7_8_DC"
+full.name <- "SBharadwaj_20240318_Sample_1_4_7_8_Monocyte_Macrophages"
 
 # for (full.name in unique(samplesheet$full.dataset.name)){
   
