@@ -50,8 +50,8 @@ path.to.rmd <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch/04_r
 # args <- parser$parse_args()
 # 
 # full.name <- args$full_name
-# full.name <- "SBharadwaj_20240318_Sample_1_4_7_8_DC"
-full.name <- "SBharadwaj_20240318_Sample_1_4_7_8_Monocyte_Macrophages"
+full.name <- "SBharadwaj_20240318_Sample_1_4_7_8_DC"
+# full.name <- "SBharadwaj_20240318_Sample_1_4_7_8_Monocyte_Macrophages"
 
 # for (full.name in unique(samplesheet$full.dataset.name)){
   
