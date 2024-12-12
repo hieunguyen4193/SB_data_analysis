@@ -14,6 +14,15 @@ source(file.path(scrna_pipeline_src, "s8_integration_and_clustering_SeuratV5.R")
 #####----------------------------------------------------------------------#####
 # CONFIGURATIONS AND PREPRATIONS
 #####----------------------------------------------------------------------#####
+num.PCA <- 30
+num.PC.used.in.UMAP <- 30
+num.PC.used.in.Clustering <- 30
+num.dim.integration <- 30
+num.dim.cluster <- 30
+cluster.resolution <- 0.5
+use.sctransform <- TRUE
+vars.to.regress <- c("percent.mt")
+
 # outdir <- "/home/hieunguyen/CRC1382/outdir"
 outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 # PROJECT <- "SBharadwaj_20240318_Sample_3_6"
@@ -31,16 +40,18 @@ dir.create(path.to.save.subclusters, showWarnings = FALSE, recursive = TRUE)
 s.obj.raw <- readRDS(file.path(path.to.01.output,sprintf("Project_%s.rds", PROJECT)))
 s.obj <- subset(s.obj.raw, cca.cluster.0.5 %in% sub_clusters[[PROJECT]][[sub.cluster.idx]])
 
-##### re-integration
+pca_reduction_name <- "RNA_PCA"
+umap_reduction_name <- "RNA_UMAP"
 
-num.PCA <- 30
-num.PC.used.in.UMAP <- 30
-num.PC.used.in.Clustering <- 30
-num.dim.integration <- 30
-num.dim.cluster <- 30
-cluster.resolution <- 0.5
-use.sctransform <- TRUE
-vars.to.regress <- c("percent.mt")
+s.obj <- RunPCA(s.obj, npcs = num.PCA, verbose = FALSE, reduction.name=pca_reduction_name)
+s.obj <- RunUMAP(s.obj, reduction = pca_reduction_name, 
+                 dims = 1:num.PC.used.in.UMAP, reduction.name=umap_reduction_name,
+                 seed.use = my_random_seed, umap.method = "uwot")
+# clustering 
+s.obj <- FindNeighbors(s.obj, reduction = pca_reduction_name, dims = 1:num.PC.used.in.Clustering)
+s.obj <- FindClusters(s.obj, resolution = cluster.resolution, random.seed = 0)
+
+##### re-integration
 
 DefaultAssay(s.obj) <- "RNA"
 s.obj <- JoinLayers(s.obj)
@@ -54,3 +65,4 @@ s.obj.integrated <- s8.integration.and.clustering_V5(s.obj = s.obj,
                                                      cluster.resolution = cluster.resolution,
                                                      vars.to.regress = vars.to.regress,
                                                      PROJECT = PROJECT)
+
