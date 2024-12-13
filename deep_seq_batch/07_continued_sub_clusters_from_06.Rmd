@@ -73,10 +73,15 @@ source(file.path(scrna_pipeline_src, "s8_integration_and_clustering_SeuratV5.R")
 #####----------------------------------------------------------------------#####
 outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 
-PROJECT <- params$PROJECT
-sub.cluster.idx <- params$sub.cluster.idx
-cont.sub.cluster.idx <- params$cont.sub.cluster.idx
-integration <- params$integration
+# PROJECT <- params$PROJECT
+# sub.cluster.idx <- params$sub.cluster.idx
+# cont.sub.cluster.idx <- params$cont.sub.cluster.idx
+# integration <- params$integration
+
+PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8"
+sub.cluster.idx <- "v0.1"
+cont.sub.cluster.idx <- "Monocyte_Macrophages"
+integration <- TRUE
 
 path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(path.to.main.input, "data_analysis")
@@ -84,18 +89,18 @@ path.to.07.output <- file.path(path.to.main.output, "07_output", sub.cluster.idx
 dir.create(path.to.07.output, showWarnings = FALSE, recursive = TRUE)
 
 if (integration == TRUE){
+  print("reading integrated data")
   s.obj <- readRDS(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.output.s8.rds", PROJECT, cont.sub.cluster.idx)))  
   reduction.name <- "cca_UMAP"
   cluster.name <- "cca.cluster.0.5"
 } else {
+    print("reading un-integrated data")
   s.obj <- readRDS(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.noIntegration.rds", PROJECT, cont.sub.cluster.idx)))
   reduction.name <- "SCT_UMAP"
   cluster.name <- "seurat_clusters"
   path.to.07.output <- file.path(path.to.07.output, "noReIntegration")
   dir.create(path.to.07.output, showWarnings = FALSE, recursive = TRUE)
 }
-
-
 ```
 
 # Dimension reduction with UMAP
