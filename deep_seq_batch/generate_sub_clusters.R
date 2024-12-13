@@ -45,20 +45,25 @@ for (PROJECT in c("SBharadwaj_20240318_Sample_3_6",
   s.obj.raw <- readRDS(file.path(path.to.01.output,sprintf("Project_%s.rds", PROJECT)))
   s.obj <- subset(s.obj.raw, cca.cluster.0.5 %in% sub_clusters[[PROJECT]][[sub.cluster.idx]])
   
-  s.obj.no.integrated <- s.obj
-  s.obj.no.integrated <- DietSeurat(s.obj.no.integrated)
-  pca_reduction_name <- "RNA_PCA"
-  umap_reduction_name <- "RNA_UMAP"
-  
-  s.obj.no.integrated <- RunPCA(s.obj.no.integrated, npcs = num.PCA, verbose = FALSE, reduction.name=pca_reduction_name)
-  s.obj.no.integrated <- RunUMAP(s.obj.no.integrated, reduction = pca_reduction_name, 
-                                 dims = 1:num.PC.used.in.UMAP, reduction.name=umap_reduction_name,
-                                 seed.use = my_random_seed, umap.method = "uwot")
-  # clustering 
-  s.obj.no.integrated <- FindNeighbors(s.obj.no.integrated, reduction = pca_reduction_name, dims = 1:num.PC.used.in.Clustering)
-  s.obj.no.integrated <- FindClusters(s.obj.no.integrated, resolution = cluster.resolution, random.seed = 0)
-  
-  saveRDS(s.obj.no.integrated, file.path(path.to.save.subclusters, "s8_output", sprintf("%s.noIntegration.rds", PROJECT)))
+  if (file.exists(file.path(path.to.save.subclusters, "s8_output", sprintf("%s.noIntegration.rds", PROJECT))) == FALSE){
+    s.obj.no.integrated <- s.obj
+    s.obj.no.integrated <- DietSeurat(s.obj.no.integrated)
+    DefaultAssay(s.obj.no.integrated) <- "RNA"
+    s.obj.no.integrated <- SCTransform(s.obj.no.integrated, vars.to.regress = vars.to.regress, verbose = FALSE)
+    
+    pca_reduction_name <- "SCT_PCA"
+    umap_reduction_name <- "SCT_UMAP"
+    
+    s.obj.no.integrated <- RunPCA(s.obj.no.integrated, npcs = num.PCA, verbose = FALSE, reduction.name=pca_reduction_name)
+    s.obj.no.integrated <- RunUMAP(s.obj.no.integrated, reduction = pca_reduction_name, 
+                                   dims = 1:num.PC.used.in.UMAP, reduction.name=umap_reduction_name,
+                                   seed.use = my_random_seed, umap.method = "uwot")
+    # clustering 
+    s.obj.no.integrated <- FindNeighbors(s.obj.no.integrated, reduction = pca_reduction_name, dims = 1:num.PC.used.in.Clustering)
+    s.obj.no.integrated <- FindClusters(s.obj.no.integrated, resolution = cluster.resolution, random.seed = 0)
+    
+    saveRDS(s.obj.no.integrated, file.path(path.to.save.subclusters, "s8_output", sprintf("%s.noIntegration.rds", PROJECT)))
+  }
   
   ##### re-integration
   if (file.exists(file.path(path.to.save.subclusters, "s8_output", sprintf("%s.output.s8.rds", PROJECT))) == FALSE){

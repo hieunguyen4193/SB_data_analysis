@@ -1,5 +1,5 @@
 ---
-title: "Data analysis for sub-clustering data, Project `r params$PROJECT`, sub-clustering version `r params$sub.cluster.idx`, `r params$cont.sub.cluster.idx`"
+title: "Data analysis for sub-clustering data, Project `r params$PROJECT`, sub-clustering version `r params$sub.cluster.idx`, `r params$cont.sub.cluster.idx`, RE-INTEGRATION `r params$integration`"
 author:
   - "trnguyen@ukaachen.de"
 date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
@@ -17,6 +17,7 @@ params:
   PROJECT: NA
   sub.cluster.idx: NA
   cont.sub.cluster.idx: NA
+  integration: NA
 ---
   
   
@@ -75,13 +76,25 @@ outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 PROJECT <- params$PROJECT
 sub.cluster.idx <- params$sub.cluster.idx
 cont.sub.cluster.idx <- params$cont.sub.cluster.idx
+integration <- params$integration
 
 path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(path.to.main.input, "data_analysis")
 path.to.07.output <- file.path(path.to.main.output, "07_output", sub.cluster.idx, cont.sub.cluster.idx)
 dir.create(path.to.07.output, showWarnings = FALSE, recursive = TRUE)
 
-s.obj <- readRDS(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.output.s8.rds", PROJECT, cont.sub.cluster.idx)))
+if (integration == TRUE){
+  s.obj <- readRDS(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.output.s8.rds", PROJECT, cont.sub.cluster.idx)))  
+  reduction.name <- "cca_UMAP"
+  cluster.name <- "cca.cluster.0.5"
+} else {
+  s.obj <- readRDS(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.noIntegration.rds", PROJECT, cont.sub.cluster.idx)))
+  reduction.name <- "SCT_UMAP"
+  cluster.name <- "seurat_clusters"
+  path.to.07.output <- file.path(path.to.07.output, "noReIntegration")
+  dir.create(path.to.07.output, showWarnings = FALSE, recursive = TRUE)
+}
+
 
 ```
 
@@ -89,7 +102,7 @@ s.obj <- readRDS(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.output
 
 ## UMAP: all clusters 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, label.size = 10, pt.size = 1, repel = TRUE, group.by = "cca.cluster.0.5") + 
+DimPlot(object = s.obj, reduction = reduction.name, label = TRUE, label.box = TRUE, label.size = 10, pt.size = 1, repel = TRUE, group.by = cluster.name) + 
   ggtitle(sprintf("UMAP: All clusters")) +
   theme(axis.text = element_text(size=20, face = "bold"),
         axis.title = element_text(size=20, face = "bold"), 
@@ -98,19 +111,17 @@ DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, 
 
 ## UMAP: all samples
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, label.size = 10, pt.size = 1, repel = TRUE, group.by = "name") + 
+DimPlot(object = s.obj, reduction = reduction.name, label = TRUE, label.box = TRUE, label.size = 10, pt.size = 1, repel = TRUE, group.by = "name") + 
   ggtitle(sprintf("UMAP Sample: All samples after integrating")) +
   theme(axis.text = element_text(size=20, face = "bold"),
         axis.title = element_text(size=20, face = "bold"), 
         title = element_text(size = 20, face = "bold"))
 ```
 
-
-
 # Cluster marker genes
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.height=10, fig.width=18}
-Idents(s.obj) <- "cca.cluster.0.5"
+Idents(s.obj) <- cluster.name
 if (file.exists(file.path(path.to.07.output, "DE_cluster_marker_genes.rds")) == FALSE){
   DefaultAssay(s.obj) <- "SCT"
   s.obj <- PrepSCTFindMarkers(s.obj)
@@ -130,7 +141,7 @@ for (cluster.id in sort(unique(cluster.markers$cluster))){
   DefaultAssay(s.obj) <- "SCT"
   cat(sprintf("### Cluster %s \n", cluster.id))
   tmp.cluster.markers <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
-  p <- FeaturePlot(object = s.obj, reduction = "cca_UMAP", features = head(tmp.cluster.markers, 9)$gene, ncol = 3, label = TRUE, pt.size = 0.5, label.size = 5, label.color = "red", slot = "data")  
+  p <- FeaturePlot(object = s.obj, reduction = reduction.name, features = head(tmp.cluster.markers, 9)$gene, ncol = 3, label = TRUE, pt.size = 0.5, label.size = 5, label.color = "red", slot = "data")  
   print(p)
   cat("\n \n")
 }
@@ -166,7 +177,7 @@ cluster.markers %>% create_dt()
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-all.cluster.ids <- sort(unique(s.obj$cca.cluster.0.5))
+all.cluster.ids <- sort(unique(s.obj@meta.data[[cluster.name]]))
 for (cluster.id in all.cluster.ids){
   tmp.table <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
   cat(paste("\n\n### Cluster: ", cluster.id, "##\n"))
@@ -191,7 +202,7 @@ for (cluster.id in all.cluster.ids){
 
 # Number of cells in each cluster in each sample
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-cell.count.in.clusters <- table(s.obj$name, s.obj$cca.cluster.0.5) %>% as.data.frame() %>%
+cell.count.in.clusters <- table(s.obj$name, s.obj@meta.data[[cluster.name]]) %>% as.data.frame() %>%
   pivot_wider(names_from = "Var2", values_from = "Freq") 
 cell.count.in.clusters %>% create_dt()
 ```
@@ -308,16 +319,26 @@ top5.annotationdf %>% create_dt()
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>%
+if (integration == TRUE){
+  meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>%
   rowwise() %>%
   mutate(prediction2 = ifelse(nrow(subset(annotationdf, annotationdf$cluster.id == cca.cluster.0.5)) != 0, 
                               subset(annotationdf, annotationdf$cluster.id == cca.cluster.0.5)$annotation,
                               "None")) %>%
+  column_to_rownames("barcode")  
+} else {
+  meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>%
+  rowwise() %>%
+  mutate(prediction2 = ifelse(nrow(subset(annotationdf, annotationdf$cluster.id == seurat_clusters)) != 0, 
+                              subset(annotationdf, annotationdf$cluster.id == seurat_clusters)$annotation,
+                              "None")) %>%
   column_to_rownames("barcode")
+}
+
 meta.data <- meta.data[row.names(s.obj@meta.data),]
 s.obj <- AddMetaData(s.obj, metadata = meta.data$prediction2, col.name = "prediction2")
 
-DimPlot(object = s.obj, reduction = "cca_UMAP", label.box = TRUE, label = TRUE, repel = TRUE, group.by = "prediction2")
+DimPlot(object = s.obj, reduction = reduction.name, label.box = TRUE, label = TRUE, repel = TRUE, group.by = "prediction2")
 ```
 
 ## Number of cells in each annotated cluster (top-1 annotation)
@@ -329,16 +350,16 @@ table(s.obj$prediction2, s.obj$name) %>% as.data.frame() %>% pivot_wider(names_f
 
 ## All samples in integrated UMAP {.tabset}
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-Idents(s.obj) <- "cca.cluster.0.5"
-FeaturePlot(s.obj, features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), label = TRUE, reduction = "cca_UMAP")
+Idents(s.obj) <- cluster.name
+FeaturePlot(s.obj, features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), label = TRUE, reduction = reduction.name)
 ```
 
 ## Each sample in integrated UMAP {,tabset}
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-Idents(s.obj) <- "cca.cluster.0.5"
+Idents(s.obj) <- cluster.name
 for (sample.id in unique(s.obj$name)){
   cat(sprintf("### Sample %s \n", sample.id))
-  p <- FeaturePlot(subset(s.obj, name == sample.id), features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), label = TRUE, reduction = "cca_UMAP")  
+  p <- FeaturePlot(subset(s.obj, name == sample.id), features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), label = TRUE, reduction = reduction.name)  
   print(p)
   cat("\n \n")
 }
@@ -348,14 +369,14 @@ for (sample.id in unique(s.obj$name)){
 ## Violin plot: Ciita, Foxp3, Klrg1, Gata3 genes, all samples
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-VlnPlot(object = s.obj, features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), group.by = "cca.cluster.0.5", ncol = 2, assay = "SCT", slot = "data")
+VlnPlot(object = s.obj, features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), group.by = cluster.name, ncol = 2, assay = "SCT", slot = "data")
 ```
 
 ## Violin plot: Ciita, Foxp3, Klrg1, Gata3 genes, each sample {.tabset}
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 for (sample.id in unique(s.obj$name)){
   cat(sprintf("### Sample %s \n", sample.id))
-  p <- VlnPlot(object = subset(s.obj, name == sample.id), features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), group.by = "cca.cluster.0.5", ncol = 2, assay = "SCT", slot = "data")  
+  p <- VlnPlot(object = subset(s.obj, name == sample.id), features = c("Ciita", "Foxp3", "Klrg1", "Gata3"), group.by = cluster.name, ncol = 2, assay = "SCT", slot = "data")  
   print(p)
   cat("\n \n")
 }

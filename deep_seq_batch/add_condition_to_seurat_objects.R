@@ -6,7 +6,9 @@ path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_ba
 source(file.path(path.to.project.src, "00_import_libraries.R"))
 source(file.path(path.to.project.src, "00_helper_functions.R"))
 
-samplesheet <- read.csv("/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch/SampleSheet_for_DGE_and_CellChat.raw.csv")
+# samplesheet <- read.csv("/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch/SampleSheet_for_DGE_and_CellChat.raw.csv")
+samplesheet <- read.csv(file.path(path.to.project.src, "SampleSheet_for_DGE_and_CellChat.raw.noSubClusterIntegration.csv"))
+
 all.s.obj <- unique(samplesheet$path)
 for (file in all.s.obj){
   if (file.exists(str_replace(file, ".rds", ".addedConditions.rds")) == FALSE){
@@ -26,6 +28,3 @@ for (file in all.s.obj){
     print(sprintf("%s exists", str_replace(file, ".rds", ".addedConditions.rds")))
   }
 }
-
-
-s.obj <- readRDS(samplesheet$path[[1]])
