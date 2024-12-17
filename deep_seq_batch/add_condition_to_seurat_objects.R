@@ -21,7 +21,7 @@ for (file in all.s.obj){
     s.obj <- AddMetaData(object = s.obj, col.name = "condition", metadata = meta.data$condition)
     s.obj <- AddMetaData(object = s.obj, col.name = "sampletype", metadata = meta.data$sampletype)
     all.conditions <- unique(s.obj$condition)
-    print(all.conditions)
+    # print(all.conditions)
     saveRDS(s.obj, str_replace(file, ".rds", ".addedConditions.rds"))
     print(sprintf("finished saving %s", file))  
   } else {

@@ -33,19 +33,20 @@ outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 for (PROJECT in c("SBharadwaj_20240318_Sample_3_6",
                   "SBharadwaj_20240318_Sample_1_4_7_8_2_5",
                   "SBharadwaj_20240318_Sample_1_4_7_8")){
-  print(sprintf("WORKING ON THE PROJECT %s", PROJECT))
   sub.cluster.idx <- "v0.1"
-  
   path.to.main.input <- file.path(outdir, PROJECT)
   path.to.main.output <- file.path(path.to.main.input, "data_analysis")
   path.to.01.output <- file.path(path.to.main.output, "01_output")
   path.to.save.subclusters <- file.path(path.to.main.output, "sub_clusters", sub.cluster.idx)
   dir.create(path.to.save.subclusters, showWarnings = FALSE, recursive = TRUE)
   dir.create(file.path(path.to.save.subclusters, "s8_output"), showWarnings = FALSE, recursive = TRUE)
-  s.obj.raw <- readRDS(file.path(path.to.01.output,sprintf("Project_%s.rds", PROJECT)))
-  s.obj <- subset(s.obj.raw, cca.cluster.0.5 %in% sub_clusters[[PROJECT]][[sub.cluster.idx]])
   
   if (file.exists(file.path(path.to.save.subclusters, "s8_output", sprintf("%s.noIntegration.rds", PROJECT))) == FALSE){
+    print(sprintf("WORKING ON THE PROJECT %s", PROJECT))
+    s.obj.raw <- readRDS(file.path(path.to.01.output,sprintf("Project_%s.rds", PROJECT)))
+    s.obj <- subset(s.obj.raw, cca.cluster.0.5 %in% sub_clusters[[PROJECT]][[sub.cluster.idx]])
+
+    print("generate non-integration data ...")
     s.obj.no.integrated <- s.obj
     s.obj.no.integrated <- DietSeurat(s.obj.no.integrated)
     DefaultAssay(s.obj.no.integrated) <- "RNA"
@@ -63,6 +64,8 @@ for (PROJECT in c("SBharadwaj_20240318_Sample_3_6",
     s.obj.no.integrated <- FindClusters(s.obj.no.integrated, resolution = cluster.resolution, random.seed = 0)
     
     saveRDS(s.obj.no.integrated, file.path(path.to.save.subclusters, "s8_output", sprintf("%s.noIntegration.rds", PROJECT)))
+  } else {
+    print(sprintf("File %s exists", file.path(path.to.save.subclusters, "s8_output", sprintf("%s.noIntegration.rds", PROJECT))))
   }
   
   ##### re-integration

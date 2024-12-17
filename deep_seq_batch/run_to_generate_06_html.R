@@ -13,7 +13,8 @@ path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch
 # PROJECT <- "SBharadwaj_20240318_Sample_3_6"
 # PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8"
 
-for (PROJECT in c("SBharadwaj_20240318_Sample_1_4_7_8_2_5",
+for (PROJECT in c("SBharadwaj_20240318_Sample_3_6",
+                  "SBharadwaj_20240318_Sample_1_4_7_8_2_5",
                   "SBharadwaj_20240318_Sample_1_4_7_8")){
   sub.cluster.idx <- "v0.1"
   

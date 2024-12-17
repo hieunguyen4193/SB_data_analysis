@@ -25,7 +25,8 @@ my_random_seed <- 42
 outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 sub.cluster.idx <- "v0.1"
 
-for (PROJECT in c("SBharadwaj_20240318_Sample_1_4_7_8_2_5",
+for (PROJECT in c("SBharadwaj_20240318_Sample_3_6",
+                  "SBharadwaj_20240318_Sample_1_4_7_8_2_5",
                   "SBharadwaj_20240318_Sample_1_4_7_8")) {
   for (cont.sub.cluster.idx in names(sub_clusters[[PROJECT]][[sub.cluster.idx]])){
     print(sprintf("Working on sub cluster: %s", cont.sub.cluster.idx))
