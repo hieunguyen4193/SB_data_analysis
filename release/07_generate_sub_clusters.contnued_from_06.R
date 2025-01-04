@@ -37,7 +37,7 @@ for (PROJECT in c("SBharadwaj_20240318_Sample_3_6",
     ##### based on Sraddha annotations on RE INTEGRATION SUB CLUSTERING DATA.
     path.to.06.output <- file.path(path.to.main.output, "06_output", "preprocees_sub_clusters", sub.cluster.idx, "ReIntegration")
     
-    path.to.07.output <- file.path(path.to.main.output, "07_output", sub.cluster.idx, cont.sub.cluster.idx, "raw_sub_clusters")
+    path.to.07.output <- file.path(path.to.main.output, "07_output", "raw_sub_clusters", sub.cluster.idx, cont.sub.cluster.idx)
     dir.create(path.to.07.output, showWarnings = FALSE, recursive = TRUE)
     
     if (file.exists(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.noIntegration.rds", PROJECT, cont.sub.cluster.idx))) == FALSE){

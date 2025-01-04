@@ -19,7 +19,7 @@ sub.cluster.idx <- "v0.1"
 
 for (PROJECT in all.PROJECTS){
   for (integration in c(TRUE, FALSE)){
-    path.to.html.outputs <- file.path(outdir, PROJECT, "html_output", "06_output")
+    path.to.html.outputs <- file.path(outdir, PROJECT, "html_output", "06_output", sub.cluster.idx)
     dir.create(path.to.html.outputs, showWarnings = FALSE, recursive = TRUE)
     
     path.to.Rmd.file <- file.path(path.to.main.src, "06_sub_clustering_analysis.Rmd")
@@ -28,6 +28,8 @@ for (PROJECT in all.PROJECTS){
     } else {
       html_name <- basename(path.to.Rmd.file) %>% str_replace(".Rmd", sprintf(".%s.html", PROJECT))
     }
+    
+    html_name <- str_replace(html_name, ".html", sprintf(".%s.html", sub.cluster.idx))
     
     if (file.exists(file.path(path.to.html.outputs, html_name)) == FALSE){
       rmarkdown::render(input = path.to.Rmd.file,
@@ -42,4 +44,3 @@ for (PROJECT in all.PROJECTS){
     }
   }
 }
-
