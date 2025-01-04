@@ -1,5 +1,5 @@
 ---
-title: "Data analysis for sub-clustering data, Project `r params$PROJECT`, sub-clustering version `r params$sub.cluster.idx`, `r params$cont.sub.cluster.idx`, RE-INTEGRATION `r params$integration`"
+title: "Data analysis for sub-clustering data, Project `r params$PROJECT`, sub-clustering version `r params$sub.cluster.idx`, RE-INTEGRATION `params$integration`"
 author:
   - "trnguyen@ukaachen.de"
 date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
@@ -16,8 +16,8 @@ output:
 params:
   PROJECT: NA
   sub.cluster.idx: NA
-  cont.sub.cluster.idx: NA
   integration: NA
+  outdir: NA
 ---
   
   
@@ -71,36 +71,35 @@ source(file.path(scrna_pipeline_src, "s8_integration_and_clustering_SeuratV5.R")
 #####----------------------------------------------------------------------#####
 # CONFIGURATIONS AND PREPRATIONS
 #####----------------------------------------------------------------------#####
-outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 
+outdir <- params$outdir
 PROJECT <- params$PROJECT
 sub.cluster.idx <- params$sub.cluster.idx
-cont.sub.cluster.idx <- params$cont.sub.cluster.idx
 integration <- params$integration
-
-# PROJECT <- "SBharadwaj_20240318_Sample_1_4_7_8"
-# sub.cluster.idx <- "v0.1"
-# cont.sub.cluster.idx <- "Monocyte_Macrophages"
-# integration <- TRUE
 
 path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(path.to.main.input, "data_analysis")
-path.to.07.output <- file.path(path.to.main.output, "07_output", sub.cluster.idx, cont.sub.cluster.idx)
-dir.create(path.to.07.output, showWarnings = FALSE, recursive = TRUE)
+path.to.06.output <- file.path(path.to.main.output, "06_output", "preprocees_sub_clusters", sub.cluster.idx)
+dir.create(path.to.06.output, showWarnings = FALSE, recursive = TRUE)
+path.to.save.subclusters <- file.path(path.to.main.output, "06_output", "raw_sub_clusters", sub.cluster.idx)
+```
 
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=18}
 if (integration == TRUE){
-  print("reading integrated data")
-  s.obj <- readRDS(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.output.s8.rds", PROJECT, cont.sub.cluster.idx)))  
+  print("USING RE-INTEGRATED DATA AFTER SUB-CLUSTERING")
+  s.obj <- readRDS(file.path(path.to.save.subclusters, "s8_output", sprintf("%s.output.s8.rds", PROJECT))) 
   reduction.name <- "cca_UMAP"
   cluster.name <- "cca.cluster.0.5"
+  path.to.06.output <- file.path(path.to.06.output, "ReIntegration")
 } else {
-    print("reading un-integrated data")
-  s.obj <- readRDS(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.noIntegration.rds", PROJECT, cont.sub.cluster.idx)))
+  print("NO RE-INTEGRATED DATA AFTER SUB-CLUSTERING")
+  s.obj <- readRDS(file.path(path.to.save.subclusters, "s8_output", sprintf("%s.noIntegration.rds", PROJECT)))
   reduction.name <- "SCT_UMAP"
   cluster.name <- "seurat_clusters"
-  path.to.07.output <- file.path(path.to.07.output, "noReIntegration")
-  dir.create(path.to.07.output, showWarnings = FALSE, recursive = TRUE)
+  path.to.06.output <- file.path(path.to.06.output, "noReIntegration")
 }
+dir.create(path.to.06.output, showWarnings = FALSE, recursive = TRUE)
 ```
 
 # Dimension reduction with UMAP
@@ -127,14 +126,14 @@ DimPlot(object = s.obj, reduction = reduction.name, label = TRUE, label.box = TR
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.height=10, fig.width=18}
 Idents(s.obj) <- cluster.name
-if (file.exists(file.path(path.to.07.output, "DE_cluster_marker_genes.rds")) == FALSE){
+if (file.exists(file.path(path.to.06.output, "DE_cluster_marker_genes.rds")) == FALSE){
   DefaultAssay(s.obj) <- "SCT"
   s.obj <- PrepSCTFindMarkers(s.obj)
   cluster.markers <- FindAllMarkers(object = s.obj, assay = "SCT", test.use = "wilcox", slot = "data", min.pct = 0.5)
   cluster.markers <- subset(cluster.markers, cluster.markers$p_val_adj < 0.05 & cluster.markers$avg_log2FC > 0)
-  saveRDS(cluster.markers, file.path(path.to.07.output, "DE_cluster_marker_genes.rds"))
+  saveRDS(cluster.markers, file.path(path.to.06.output, "DE_cluster_marker_genes.rds"))
 } else {
-  cluster.markers <- readRDS(file.path(path.to.07.output, "DE_cluster_marker_genes.rds"))
+  cluster.markers <- readRDS(file.path(path.to.06.output, "DE_cluster_marker_genes.rds"))
 }
 ```
 
@@ -389,10 +388,10 @@ for (sample.id in unique(s.obj$name)){
 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-if (file.exists(file.path(path.to.07.output,sprintf("Project_%s_%s_%s.rds", PROJECT, sub.cluster.idx, cont.sub.cluster.idx))) == FALSE){
-  saveRDS(s.obj, file.path(path.to.07.output,sprintf("Project_%s_%s_%s.rds", PROJECT, sub.cluster.idx, cont.sub.cluster.idx)))  
+if (file.exists(file.path(path.to.06.output,sprintf("Project_%s_%s.rds", PROJECT, sub.cluster.idx))) == FALSE){
+  saveRDS(s.obj, file.path(path.to.06.output,sprintf("Project_%s_%s.rds", PROJECT, sub.cluster.idx)))  
 } else {
-  s.obj <- readRDS(file.path(path.to.07.output,sprintf("Project_%s_%s_%s.rds", PROJECT, sub.cluster.idx, cont.sub.cluster.idx)))
+  s.obj <- readRDS(file.path(path.to.06.output,sprintf("Project_%s_%s.rds", PROJECT, sub.cluster.idx)))
 }
 ```
 
@@ -403,19 +402,15 @@ if ("loupeR" %in% installed.packages() == FALSE){
   install.packages("/media/hieunguyen/HD01/storage/offline_pkgs/loupeR_Linux.tar.gz", repos = NULL, type = "source")
 }
 
-if (file.exists(file.path(path.to.07.output, sprintf("%s_%s_%s", 
-                                                     PROJECT,
-                                                     sub.cluster.idx,
-                                                     cont.sub.cluster.idx))) == FALSE){
+if (file.exists(file.path(path.to.06.output, sprintf("PROJECT_%s_%s_cloupe_converted_from_seurat", PROJECT, 
+                          sub.cluster.idx))) == FALSE){
   library(loupeR)
   loupeR::setup()
   create_loupe_from_seurat(
       s.obj,
-      output_dir = file.path(path.to.07.output),
-      output_name = sprintf("%s_%s_%s", 
-                            PROJECT, 
-                            sub.cluster.idx,
-                            cont.sub.cluster.idx),
+      output_dir = file.path(path.to.06.output),
+      output_name = sprintf("PROJECT_%s_%s_cloupe_converted_from_seurat", PROJECT, 
+                            sub.cluster.idx),
       dedup_clusters = FALSE,
       executable_path = NULL,
       force = TRUE)  

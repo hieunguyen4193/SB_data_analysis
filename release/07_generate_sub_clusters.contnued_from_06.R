@@ -1,7 +1,7 @@
 # gc()
 # rm(list = ls())
 
-path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/deep_seq_batch"
+path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/release"
 scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline_SeuratV5/processes_src"
 
 source(file.path(path.to.project.src, "00_import_libraries.R"))
@@ -22,7 +22,7 @@ cluster.resolution <- 0.5
 use.sctransform <- TRUE
 vars.to.regress <- c("percent.mt")
 my_random_seed <- 42
-outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
+outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102"
 sub.cluster.idx <- "v0.1"
 
 for (PROJECT in c("SBharadwaj_20240318_Sample_3_6",
@@ -32,14 +32,17 @@ for (PROJECT in c("SBharadwaj_20240318_Sample_3_6",
     print(sprintf("Working on project %s sub cluster: %s", PROJECT, cont.sub.cluster.idx))
     path.to.main.input <- file.path(outdir, PROJECT)
     path.to.main.output <- file.path(path.to.main.input, "data_analysis")
-    path.to.06.output <- file.path(path.to.main.output, "06_output", sub.cluster.idx)
+
+    ##### continued sub-clustering in 07_output takes input from 06_output with RE INTEGRATION.
+    ##### based on Sraddha annotations on RE INTEGRATION SUB CLUSTERING DATA.
+    path.to.06.output <- file.path(path.to.main.output, "06_output", "preprocees_sub_clusters", sub.cluster.idx, "ReIntegration")
     
-    path.to.07.output <- file.path(path.to.main.output, "07_output", sub.cluster.idx, cont.sub.cluster.idx)
+    path.to.07.output <- file.path(path.to.main.output, "07_output", sub.cluster.idx, cont.sub.cluster.idx, "raw_sub_clusters")
     dir.create(path.to.07.output, showWarnings = FALSE, recursive = TRUE)
     
     if (file.exists(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.noIntegration.rds", PROJECT, cont.sub.cluster.idx))) == FALSE){
       print("Generating data ...")
-      s.obj.raw <- readRDS(file.path(path.to.06.output, sprintf("Project_%s_%s.rds", PROJECT, sub.cluster.idx)))
+      s.obj.raw <- readRDS(file.path(path.to.06.output,sprintf("Project_%s_%s.rds", PROJECT, sub.cluster.idx)))
       s.obj <- subset(s.obj.raw, cca.cluster.0.5 %in% sub_clusters[[PROJECT]][[sub.cluster.idx]][[cont.sub.cluster.idx]])
       
       s.obj.no.integrated <- s.obj
@@ -85,7 +88,6 @@ for (PROJECT in c("SBharadwaj_20240318_Sample_3_6",
                                                            PROJECT = sprintf("%s_%s", PROJECT, cont.sub.cluster.idx))
     } else {
       print("integrated data exists")
-      # s.obj.integrated <- readRDS(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.output.s8.rds", PROJECT, cont.sub.cluster.idx)))
     }
   }
 }
