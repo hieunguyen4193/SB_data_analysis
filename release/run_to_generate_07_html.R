@@ -2,9 +2,13 @@ gc()
 rm(list = ls())
 
 path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/release"
+scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline_SeuratV5/processes_src"
 
 source(file.path(path.to.project.src, "00_import_libraries.R"))
 source(file.path(path.to.project.src, "00_helper_functions.R"))
+source(file.path(path.to.project.src, "sub_clustering_indices.R"))
+source(file.path(scrna_pipeline_src, "s8_integration_and_clustering_SeuratV5.R"))
+source(file.path(path.to.project.src, "sub_clustering_indices.continued_from_06.R"))
 
 outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102"
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/release"

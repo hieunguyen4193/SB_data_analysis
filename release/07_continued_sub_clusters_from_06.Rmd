@@ -88,13 +88,13 @@ path.to.save.subclusters <- file.path(path.to.main.output, "07_output", "raw_sub
 
 if (integration == TRUE){
   print("reading integrated data")
-  s.obj <- readRDS(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.output.s8.rds", PROJECT, cont.sub.cluster.idx)))  
+  s.obj <- readRDS(file.path(path.to.save.subclusters, "s8_output", sprintf("%s_%s.output.s8.rds", PROJECT, cont.sub.cluster.idx)))  
   reduction.name <- "cca_UMAP"
   cluster.name <- "cca.cluster.0.5"
   path.to.07.output <- file.path(path.to.07.output, "ReIntegration")
 } else {
-    print("reading un-integrated data")
-  s.obj <- readRDS(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.noIntegration.rds", PROJECT, cont.sub.cluster.idx)))
+  print("reading un-integrated data")
+  s.obj <- readRDS(file.path(path.to.save.subclusters, "s8_output", sprintf("%s_%s.noIntegration.rds", PROJECT, cont.sub.cluster.idx)))
   reduction.name <- "SCT_UMAP"
   cluster.name <- "seurat_clusters"
   path.to.07.output <- file.path(path.to.07.output, "noReIntegration")

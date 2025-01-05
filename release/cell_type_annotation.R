@@ -1,0 +1,45 @@
+all.annotations <- 
+  list(
+    SBharadwaj_20240318_Sample_1_4_7_8 = list(
+      `0` = "Conventional T cells",
+      `1` = "ILC3s",
+      `2` = "Macrophages",
+      `3` = "cDC2s",
+      `4` = "ILC2s",
+      `5` = "cDC1s",
+      `6` = "FoxP3+ Tregs",
+      `7` = "Cytotoxic and DN T cells",
+      `8` = "Low ribosomal T cells",
+      `9` = "Low ribosomal ILC3s",
+      `10` = "Rorc+ Gamma Delta T cells",
+      `11` = "Endothelial cells",
+      `12` = "Dividing Tregs",
+      `13` = "Dividing DCs",
+      `14` = "B cells",
+      `15` = "pDCs",
+      `16` = "CCR7+ DCs",
+      `17` = "Plasma cells"
+    ),
+    SBharadwaj_20240318_Sample_1_4_7_8_2_5 = list(
+      `0` = "Monocytes and transitioning Mo",
+      `1` = "Misc. Myeloid cells",
+      `2` = "CD4+ T cells",
+      `3`= "ILC3s",
+      `4` = "Dividing cells",
+      `5` = "cDC1s",
+      `6`= "cDC2s",
+      `7` = "CD137L+ pre-migratory DCs",
+      `8`= "ILC2s",
+      `9` = "CCR7+ DCs",
+      `10` = "Macrophages",
+      `11` = "CD8s and Th1",
+      `12` = "FoxP3+ Tregs",
+      `13` = "Low ribosome T cells",
+      `14` = "Low ribosome ILC3s",
+      `15` = "pDCs",
+      `16` = "Th17 cells",
+      `17` = "Endothelial cells",
+      `18` = "Plasma cells",
+      `19` = "B cells"
+    )
+  )

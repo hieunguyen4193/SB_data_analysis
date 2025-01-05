@@ -32,6 +32,7 @@ for (PROJECT in all.PROJECTS){
     html_name <- str_replace(html_name, ".html", sprintf(".%s.html", sub.cluster.idx))
     
     if (file.exists(file.path(path.to.html.outputs, html_name)) == FALSE){
+      print(sprintf("Generate html file %s", html_name))
       rmarkdown::render(input = path.to.Rmd.file,
                         output_file = html_name,
                         output_dir = path.to.html.outputs,
