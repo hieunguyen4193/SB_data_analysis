@@ -19,6 +19,7 @@ params:
   path.to.save.output: NA
   filter10cells: NA
   condition.name: NA
+  cluster.name: NA
 ---
 
 
@@ -114,16 +115,28 @@ DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 ##### Get the input data matrix
 data.input <- GetAssayData(object = s.obj, slot = "data", assay = "SCT")
-meta.data <- s.obj@meta.data %>% 
+if (cluster.name == "cca.cluster.0.5"){
+  meta.data <- s.obj@meta.data %>% 
   rownames_to_column("barcode") %>%
   rowwise() %>%
   mutate(cluster = sprintf("cluster_%s", cca.cluster.0.5)) %>%
   column_to_rownames("barcode")
-num.cluster <- length(unique(s.obj$cca.cluster.0.5))
+  num.cluster <- length(unique(s.obj$cca.cluster.0.5))
+  
+  all.cluster.idx <- to_vec (for (cluster.id in unique(s.obj$cca.cluster.0.5)) str_replace(cluster.id, "cluster_", "")) %>% as.numeric()
+  
+  meta.data$cluster <- factor(meta.data$cluster, levels = to_vec ( for (i in sort(all.cluster.idx)) sprintf("cluster_%s", i) ))
+} else if (cluster.name == "cell.annotation"){
+  meta.data <- s.obj@meta.data %>% 
+  rownames_to_column("barcode") %>%
+  rowwise() %>%
+  mutate(cluster = sprintf("cluster_%s", cell.annotation)) %>%
+  column_to_rownames("barcode")
+  num.cluster <- length(unique(s.obj$cell.annotation))
+  all.cluster.idx <- to_vec (for (cluster.id in unique(s.obj$cell.annotation)) str_replace(cluster.id, "cluster_", "")) 
+  meta.data$cluster <- factor(meta.data$cluster, levels = to_vec ( for (i in sort(all.cluster.idx)) sprintf("cluster_%s", i) ))
+}
 
-all.cluster.idx <- to_vec (for (cluster.id in unique(s.obj$cca.cluster.0.5)) str_replace(cluster.id, "cluster_", "")) %>% as.numeric()
-
-meta.data$cluster <- factor(meta.data$cluster, levels = to_vec ( for (i in sort(all.cluster.idx)) sprintf("cluster_%s", i) ))
 cellchat <- createCellChat(object = data.input, meta = meta.data, group.by = "cluster")
 
 ##### Some preprocessing steps for the cellchat object

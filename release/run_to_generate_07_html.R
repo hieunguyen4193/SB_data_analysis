@@ -24,6 +24,13 @@ sub.cluster.idx <- "v0.1"
 for (PROJECT in all.PROJECTS){
   for (cont.sub.cluster.idx in names(sub_clusters[[PROJECT]][[sub.cluster.idx]])){
     for (integration in c(TRUE, FALSE)){
+      input.params <- list(
+        PROJECT = PROJECT,
+        sub.cluster.idx = sub.cluster.idx, 
+        cont.sub.cluster.idx = cont.sub.cluster.idx,
+        integration = integration,
+        outdir = outdir
+      )
       path.to.html.outputs <- file.path(outdir, PROJECT, "html_output", "07_output", sub.cluster.idx, cont.sub.cluster.idx)
       dir.create(path.to.html.outputs, showWarnings = FALSE, recursive = TRUE)
       
@@ -37,14 +44,13 @@ for (PROJECT in all.PROJECTS){
       html_name <- str_replace(html_name, ".html", sprintf(".%s.%s.html", sub.cluster.idx, cont.sub.cluster.idx))
       
       if (file.exists(file.path(path.to.html.outputs, html_name)) == FALSE){
+        for (n in names(input.params)){
+          print(sprintf("%s: %s", n, input.params[[n]]))
+        }
         rmarkdown::render(input = path.to.Rmd.file,
                           output_file = html_name,
                           output_dir = path.to.html.outputs,
-                          params = list(    PROJECT = PROJECT,
-                                            sub.cluster.idx = sub.cluster.idx, 
-                                            cont.sub.cluster.idx = cont.sub.cluster.idx,
-                                            integration = integration,
-                                            outdir = outdir))   
+                          params = input.params)   
       } else {
         print(sprintf("File %s exists", file.path(path.to.html.outputs, html_name)))
       }
