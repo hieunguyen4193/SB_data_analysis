@@ -13,6 +13,8 @@ outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102"
 
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/release"
 samplesheet <- read.csv(file.path(path.to.main.src, "SampleSheet_all_seurat_objects.csv"))
+samplesheet <- samplesheet %>% rowwise() %>%
+  mutate(dataset_name = ifelse(reIntegration == "yes", sprintf("%s_reIntegration", dataset_name), dataset_name))
 
 sample.list <- list(
   SBharadwaj_20240318_Sample_1_4_7_8_2_5 = list(
@@ -42,26 +44,25 @@ sample.list <- list(
 
 path.to.rmd <- file.path(path.to.main.src, "03_CellChat_general_analysis.Rmd")
 
-row_i <- 1
-
-PROJECT <- samplesheet[row_i, ]$PROJECT
-dataset_name <- samplesheet[row_i, ]$dataset_name
-path.to.s.obj <- samplesheet[row_i, ]$path
-
-path.to.s.obj <- str_replace(path.to.s.obj, ".rds", ".addedInfo.rds")
-
-path.to.save.html <- file.path(outdir, PROJECT, "html_output", "03_output", dataset_name)
-dir.create(path.to.save.html, showWarnings = FALSE, recursive = TRUE)
-
-path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
-path.to.03.output <- file.path(path.to.main.output, "03_output")
-
-all.cases <- sample.list[[PROJECT]]
-
-for (condition.name in names(all.cases)){
-  for (cluster.name in c("cca.cluster.0.5", "cell.annotation")){
-    for (sample.id in all.cases[[condition.name]])
-      path.to.save.output <- file.path(path.to.03.output, dataset_name, cluster.name, condition.name, sample.id)
+for (row_i in seq(1, nrow(samplesheet))){
+  PROJECT <- samplesheet[row_i, ]$PROJECT
+  dataset_name <- samplesheet[row_i, ]$dataset_name
+  path.to.s.obj <- samplesheet[row_i, ]$path
+  
+  path.to.s.obj <- str_replace(path.to.s.obj, ".rds", ".addedInfo.rds")
+  
+  path.to.save.html <- file.path(outdir, PROJECT, "html_output", "03_output", dataset_name)
+  dir.create(path.to.save.html, showWarnings = FALSE, recursive = TRUE)
+  
+  path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
+  path.to.03.output <- file.path(path.to.main.output, "03_output")
+  
+  all.cases <- sample.list[[PROJECT]]
+  
+  for (condition.name in names(all.cases)){
+    for (cluster.name in c("cca.cluster.0.5", "cell.annotation")){
+      for (sample.id in all.cases[[condition.name]])
+        path.to.save.output <- file.path(path.to.03.output, dataset_name, cluster.name, condition.name, sample.id)
       dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
       
       print(sprintf("Working on CellChat analysis, PROJECT %s, dataset %s", PROJECT, dataset_name))
@@ -80,5 +81,7 @@ for (condition.name in names(all.cases)){
                         output_dir = path.to.save.html,
                         output_file = sprintf("03_CellChat_%s_%s_%s.html", 
                                               condition.name, cluster.name, sample.id))
+    }
   }
 }
+

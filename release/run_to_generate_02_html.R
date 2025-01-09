@@ -13,7 +13,8 @@ outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102"
 
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/release"
 samplesheet <- read.csv(file.path(path.to.main.src, "SampleSheet_all_seurat_objects.csv"))
-
+samplesheet <- samplesheet %>% rowwise() %>%
+  mutate(dataset_name = ifelse(reIntegration == "yes", sprintf("%s_reIntegration", dataset_name), dataset_name))
 pair.samples <- list(
   `SBharadwaj_20240318_Sample_1_4_7_8_2_5` = list(
     `1` = c("treated_gut_CD45", "ctrl_gut_CD45"),
