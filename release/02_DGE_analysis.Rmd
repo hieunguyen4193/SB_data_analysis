@@ -20,6 +20,7 @@ params:
   path.to.save.output: NA
   cluster.name: NA
   condition.name: NA
+  reduction.name: NA
 ---
 
 
@@ -84,7 +85,7 @@ path.to.s.obj <- params$path.to.s.obj
 path.to.save.output <- params$path.to.save.output
 cluster.name <- params$cluster.name
 condition.name <- params$condition.name
-
+reduction.name <- params$reduction.name
 # sample1 <- "treated_gut_CD45"
 # sample2 <- "ctrl_gut_CD45"
 # path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/01_output/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5.addedInfo.rds"
@@ -117,6 +118,18 @@ if ("seurat_clusters" %in% colnames(s.obj@meta.data)){
 s.obj.original <- s.obj
 ```
 
+# Dataset overview
+
+## All samples
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+DimPlot(object = s.obj, reduction = reduction.name, label = TRUE, label.box = TRUE, repel = TRUE)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+DimPlot(object = s.obj, reduction = reduction.name, label = TRUE, label.box = TRUE, repel = TRUE, split.by = condition.name)
+```
+
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
 all.genes.in.Mm.db <- AnnotationDbi::keys(org.Mm.eg.db, keytype = "SYMBOL")
 ```
@@ -147,13 +160,30 @@ if (condition.name == "condition"){
 } else {
   s.obj <- subset(s.obj, global.condition %in% c(sample1, sample2) )
 }
+```
 
+## Re-plot the UMAP
 
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+DimPlot(object = s.obj, reduction = reduction.name, label = TRUE, label.box = TRUE, repel = TRUE)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+DimPlot(object = s.obj, reduction = reduction.name, label = TRUE, label.box = TRUE, repel = TRUE, split.by = condition.name)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 savename <- sprintf("sample_%s_vs_%s.single_cell.rds", sample1, sample2)
 savename.raw <- sprintf("sample_%s_vs_%s.raw.single_cell.rds", sample1, sample2)
 
-cell.metadata <- s.obj@meta.data %>% rownames_to_column("barcode") %>% subset(select = c(barcode, cell.annotation, cca.cluster.0.5))
+if (cluster.name %in% c("cca.cluster.0.5", "seurat_clusters")){
+  cell.metadata <- s.obj@meta.data %>% rownames_to_column("barcode") %>% subset(select = c(barcode, cca.cluster.0.5))  
+} else {
+  cell.metadata <- s.obj@meta.data %>% rownames_to_column("barcode") %>% subset(select = c(barcode, cell.annotation))
+}
 ```
+
+
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 if (file.exists(file.path(path.to.save.output, savename)) == FALSE){

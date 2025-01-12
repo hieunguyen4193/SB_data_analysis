@@ -47,6 +47,28 @@ path.to.rmd <- file.path(path.to.main.src, "03_CellChat_general_analysis.Rmd")
 for (row_i in seq(1, nrow(samplesheet))){
   PROJECT <- samplesheet[row_i, ]$PROJECT
   dataset_name <- samplesheet[row_i, ]$dataset_name
+  re.integration <- samplesheet[row_i, ]$reIntegration
+  if (dataset_name == "full"){
+    if (re.integration %in% c("yes", "")){
+      to.run.clusters <- c("cca.cluster.0.5", "cell.annotation")
+      reduction.name <- "cca_UMAP"
+    } else {
+      to.run.clusters <- c("seurat_clusters", "cell.annotation")
+      reduction.name <- "SCT_UMAP"
+    }
+  } else {
+    if (re.integration %in% c("yes", "")){
+      to.run.clusters <- c("cca.cluster.0.5")      
+      reduction.name <- "cca_UMAP"
+    } else {
+      to.run.clusters <- c("seurat_clusters")
+      reduction.name <- "SCT_UMAP"
+    }
+  }
+  
+  if (PROJECT == "SBharadwaj_20240318_Sample_3_6"){
+    to.run.clusters <- setdiff(to.run.clusters, "cell.annotation")
+  }
   path.to.s.obj <- samplesheet[row_i, ]$path
   
   path.to.s.obj <- str_replace(path.to.s.obj, ".rds", ".addedInfo.rds")
@@ -60,27 +82,33 @@ for (row_i in seq(1, nrow(samplesheet))){
   all.cases <- sample.list[[PROJECT]]
   
   for (condition.name in names(all.cases)){
-    for (cluster.name in c("cca.cluster.0.5", "cell.annotation")){
-      for (sample.id in all.cases[[condition.name]])
+    for (cluster.name in to.run.clusters){
+      for (sample.id in all.cases[[condition.name]]){
         path.to.save.output <- file.path(path.to.03.output, dataset_name, cluster.name, condition.name, sample.id)
-      dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
-      
-      print(sprintf("Working on CellChat analysis, PROJECT %s, dataset %s", PROJECT, dataset_name))
-      print(sprintf("cluster name: %s, condition.name: %s", cluster.name, condition.name))
-      print(sprintf("Sample: %s", sample.id))
-      
-      rmarkdown::render(input = path.to.rmd,
-                        params = list(
-                          sample.id = sample.id,
-                          path.to.s.obj = path.to.s.obj,
-                          path.to.save.output = path.to.save.output,
-                          filter10cells = "Filter10",
-                          condition.name = condition.name,
-                          cluster.name = cluster.name
-                        ),
-                        output_dir = path.to.save.html,
-                        output_file = sprintf("03_CellChat_%s_%s_%s.html", 
-                                              condition.name, cluster.name, sample.id))
+        dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
+        
+        print(sprintf("Working on CellChat analysis, PROJECT %s, dataset %s", PROJECT, dataset_name))
+        print(sprintf("cluster name: %s, condition.name: %s", cluster.name, condition.name))
+        print(sprintf("Sample: %s", sample.id))
+        
+        if (file.exists(file.path(path.to.save.html, sprintf("03_CellChat_%s_%s_%s.html", condition.name, cluster.name, sample.id))) == FALSE){
+          rmarkdown::render(input = path.to.rmd,
+                            params = list(
+                              sample.id = sample.id,
+                              path.to.s.obj = path.to.s.obj,
+                              path.to.save.output = path.to.save.output,
+                              filter10cells = "Filter10",
+                              condition.name = condition.name,
+                              cluster.name = cluster.name,
+                              reduction.name = reduction.name
+                            ),
+                            output_dir = path.to.save.html,
+                            output_file = sprintf("03_CellChat_%s_%s_%s.html", 
+                                                  condition.name, cluster.name, sample.id))
+        } else {
+          print(sprintf("File %s exists", file.path(path.to.save.html, sprintf("03_CellChat_%s_%s_%s.html", condition.name, cluster.name, sample.id))))
+        }
+      }
     }
   }
 }

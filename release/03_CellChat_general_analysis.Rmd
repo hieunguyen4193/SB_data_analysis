@@ -20,6 +20,7 @@ params:
   filter10cells: NA
   condition.name: NA
   cluster.name: NA
+  reduction.name: NA
 ---
 
 
@@ -63,6 +64,16 @@ path.to.s.obj <- params$path.to.s.obj
 path.to.save.output <- params$path.to.save.output
 filter10cells <- params$filter10cells
 condition.name <- params$condition.name
+cluster.name <- params$cluster.name
+reduction.name <- params$reduction.name
+
+# sample.id <- "treated_gut_myeloid"
+# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/06_output/preprocees_sub_clusters/v0.1/noReIntegration/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5_v0.1.addedInfo.rds"
+# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/06_output_v0.1/seurat_clusters/name/treated_gut_myeloid"
+# filter10cells <- "Filter10"
+# condition.name <- "name"
+# reduction.name <- "SCT_UMAP"
+# cluster.name <- "seurat_clusters"
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 s.obj <- readRDS(path.to.s.obj)
@@ -102,12 +113,12 @@ genes.to.keep <- setdiff(row.names(s.obj), genes.to.exclude)
 
 ## All samples
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-DimPlot(object = s.obj.original, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, repel = TRUE)
+DimPlot(object = s.obj.original, reduction = reduction.name, label = TRUE, label.box = TRUE, repel = TRUE)
 ```
 
 ## Only 1 sample
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, repel = TRUE) +
+DimPlot(object = s.obj, reduction = reduction.name, label = TRUE, label.box = TRUE, repel = TRUE) +
   ggtitle(sprintf("Sample %s", sample.id))
 ```
 
@@ -115,7 +126,7 @@ DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 ##### Get the input data matrix
 data.input <- GetAssayData(object = s.obj, slot = "data", assay = "SCT")
-if (cluster.name == "cca.cluster.0.5"){
+if (cluster.name %in% c("cca.cluster.0.5", "seurat_clusters")){
   meta.data <- s.obj@meta.data %>% 
   rownames_to_column("barcode") %>%
   rowwise() %>%
