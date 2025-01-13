@@ -67,6 +67,8 @@ for (row_i in seq(1, nrow(samplesheet))){
   path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
   path.to.03.output <- file.path(path.to.main.output, "03_output")
   
+  filter10cells <- "Filter10"
+  
   all.pairs <- pair.samples[[PROJECT]]
   for (j in names(all.pairs)){
     if (j != "global.condition"){
@@ -85,8 +87,10 @@ for (row_i in seq(1, nrow(samplesheet))){
       print(sprintf("cluster name: %s, condition.name: %s", cluster.name, condition.name))
       print(sprintf("Perform CellChat diff. analysis %s vs %s", sample1, sample2))
       
-      path.to.cellchat1 <- file.path(path.to.03.output, dataset_name, cluster.name, condition.name, sample1)
-      path.to.cellchat2 <- file.path(path.to.03.output, dataset_name, cluster.name, condition.name, sample2)
+      path.to.cellchat1 <- file.path(path.to.03.output, dataset_name, cluster.name, condition.name, sample1, 
+                                     sprintf("CellChat_object.%s.%s.rds", sample1, filter10cells))
+      path.to.cellchat2 <- file.path(path.to.03.output, dataset_name, cluster.name, condition.name, sample2, 
+                                     sprintf("CellChat_object.%s.%s.rds", sample2, filter10cells))
       
       print(sprintf("Reading cell chat object for %s from %s", sample1, path.to.cellchat1))
       print(sprintf("Reading cell chat object for %s from %s", sample2, path.to.cellchat2))
@@ -102,7 +106,7 @@ for (row_i in seq(1, nrow(samplesheet))){
                           sample2 = sample2,
                           path.to.cellchat2 = path.to.cellchat2,
                           path.to.save.output = path.to.save.output,
-                          filter10cells = "Filter10",
+                          filter10cells = filter10cells,
                           condition.name = condition.name,
                           cluster.name = cluster.name,
                           reduction.name = reduction.name
