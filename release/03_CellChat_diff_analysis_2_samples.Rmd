@@ -74,14 +74,6 @@ condition.name <- params$condition.name
 cluster.name <- params$cluster.name
 reduction.name <- params$reduction.name
 
-# path.to.s.obj <-"/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/07_output/v0.1/DC/s8_output/SBharadwaj_20240318_Sample_1_4_7_8_DC.output.s8.addedConditions.rds"
-# sample1 <- "treated_gut_CD45"
-# path.to.cellchat1 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/Monocyte_Macrophages/treated_gut_CD45/CellChat_object.treated_gut_CD45.Filter10.rds"
-# sample2 <- "ctrl_gut_CD45"
-# path.to.cellchat2 <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/Monocyte_Macrophages/ctrl_gut_CD45/CellChat_object.ctrl_gut_CD45.Filter10.rds"
-# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8/data_analysis/03_output/Monocyte_Macrophages/treated_gut_CD45_vs_ctrl_gut_CD45"
-# filter10cells <- "Filter10"
-# condition.name <- "condition"
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 ```
@@ -92,17 +84,10 @@ cellchat.sample2 <- readRDS(path.to.cellchat2)
 
 s.obj <- readRDS(path.to.s.obj)
 if (condition.name == "condition"){
-  print("Changing the sample name to sample condition")
-  meta.data <- s.obj@meta.data %>% 
-    rownames_to_column("barcode") %>%
-    rowwise() %>%
-    mutate(name = condition) %>%
-    column_to_rownames("barcode")
-  meta.data <- meta.data[rownames(s.obj@meta.data),]
-  s.obj <- AddMetaData(object = s.obj, col.name = "name", metadata = meta.data$name)
+  s.obj <- subset(s.obj, condition %in% c(sample1, sample2) )  
+} else {
+  s.obj <- subset(s.obj, global.condition %in% c(sample1, sample2) )
 }
-
-s.obj <- subset(s.obj, name %in% c(sample1, sample2))
 ```
 
 # Dataset overview

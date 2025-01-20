@@ -117,5 +117,3 @@ for (row_i in seq(1, nrow(samplesheet))){
     }
   }
 }
-
-

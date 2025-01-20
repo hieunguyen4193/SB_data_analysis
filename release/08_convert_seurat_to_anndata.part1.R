@@ -20,7 +20,14 @@ for (row_i in seq(1, nrow(samplesheet))){
   PROJECT <- samplesheet[row_i, ]$PROJECT
   dataset_name <- samplesheet[row_i, ]$dataset_name
   path.to.s.obj <- samplesheet[row_i, ]$path
+  re.integration <- samplesheet[row_i, ]$reIntegration
   
+  if (re.integration %in% c("yes", "")){
+    reduction.name <- "cca_UMAP"
+  } else {
+    reduction.name <- "SCT_UMAP"
+  }
+    
   print(sprintf("Working on PROJECT %s, dataset name %s", PROJECT, dataset_name))
   
   path.to.s.obj <- str_replace(path.to.s.obj, ".rds", ".addedInfo.rds")
@@ -32,30 +39,34 @@ for (row_i in seq(1, nrow(samplesheet))){
   path.to.seurat2anndata <- file.path(path.to.08.output, "seurat2anndata")
   dir.create(path.to.seurat2anndata, showWarnings = FALSE, recursive = TRUE)
   
-  s.obj <- readRDS(path.to.s.obj)
-  
-  s.obj$barcode <- colnames(s.obj)
-  
-  s.obj$UMAP_1 <- s.obj@reductions$cca_UMAP@cell.embeddings[,1]
-  s.obj$UMAP_2 <- s.obj@reductions$cca_UMAP@cell.embeddings[,2]
-  
-  write.csv(s.obj@reductions$cca_UMAP@cell.embeddings, 
-            file=file.path(path.to.seurat2anndata, sprintf('pca_%s.csv', sprintf("%s_%s", PROJECT, dataset_name))), 
-            quote=F, 
-            row.names=F)
-  
-  write.csv(s.obj@meta.data, file=file.path(path.to.seurat2anndata, sprintf('metadata_%s.csv', sprintf("%s_%s", PROJECT, dataset_name))), quote=F, row.names=F)
-  
-  # write expression counts matrix
-  library(Matrix)
-  counts_matrix <- GetAssayData(s.obj, assay='SCT', slot='data')
-  writeMM(counts_matrix, file=file.path(path.to.seurat2anndata, sprintf('counts_%s.mtx', sprintf("%s_%s", PROJECT, dataset_name))))
-  
-  # write gene names
-  write.table( data.frame('gene'=rownames(counts_matrix)),file=file.path(path.to.seurat2anndata, sprintf('gene_names_%s.csv', sprintf("%s_%s", PROJECT, dataset_name))),
-               quote=F,row.names=F,col.names=F)
-  
-  coldf <- data.frame(cluster = unique(s.obj$cca.cluster.0.5),
-                      color = hue_pal()(length(unique(s.obj$cca.cluster.0.5))))
-  write.csv(coldf, file.path(path.to.seurat2anndata, sprintf('colordf_%s.csv', sprintf("%s_%s", PROJECT, dataset_name))))
+  if (file.exists(file.path(path.to.seurat2anndata, sprintf('colordf_%s.csv', sprintf("%s_%s", PROJECT, dataset_name)))) == FALSE){
+    s.obj <- readRDS(path.to.s.obj)
+    
+    s.obj$barcode <- colnames(s.obj)
+    
+    s.obj$UMAP_1 <- s.obj@reductions[[reduction.name]]@cell.embeddings[,1]
+    s.obj$UMAP_2 <- s.obj@reductions[[reduction.name]]@cell.embeddings[,2]
+    
+    write.csv(s.obj@reductions[[reduction.name]]@cell.embeddings, 
+              file=file.path(path.to.seurat2anndata, sprintf('pca_%s.csv', sprintf("%s_%s", PROJECT, dataset_name))), 
+              quote=F, 
+              row.names=F)
+    
+    write.csv(s.obj@meta.data, file=file.path(path.to.seurat2anndata, sprintf('metadata_%s.csv', sprintf("%s_%s", PROJECT, dataset_name))), quote=F, row.names=F)
+    
+    # write expression counts matrix
+    library(Matrix)
+    counts_matrix <- GetAssayData(s.obj, assay='SCT', slot='data')
+    writeMM(counts_matrix, file=file.path(path.to.seurat2anndata, sprintf('counts_%s.mtx', sprintf("%s_%s", PROJECT, dataset_name))))
+    
+    # write gene names
+    write.table( data.frame('gene'=rownames(counts_matrix)),file=file.path(path.to.seurat2anndata, sprintf('gene_names_%s.csv', sprintf("%s_%s", PROJECT, dataset_name))),
+                 quote=F,row.names=F,col.names=F)
+    
+    coldf <- data.frame(cluster = unique(s.obj$cca.cluster.0.5),
+                        color = hue_pal()(length(unique(s.obj$cca.cluster.0.5))))
+    write.csv(coldf, file.path(path.to.seurat2anndata, sprintf('colordf_%s.csv', sprintf("%s_%s", PROJECT, dataset_name))))
+  } else {
+    print(sprintf("File %s exists", file.path(path.to.seurat2anndata, sprintf('colordf_%s.csv', sprintf("%s_%s", PROJECT, dataset_name)))))
+  }
 }
