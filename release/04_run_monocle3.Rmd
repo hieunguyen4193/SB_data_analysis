@@ -64,10 +64,12 @@ use_partition <- params$use_partition
 reduction.name <- params$reduction.name
 cluster.name <- params$cluster.name
 
-# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/07_output/v0.1/Monocyte_Macrophages/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5_v0.1_Monocyte_Macrophages.addedConditions.rds"
-# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/04_output/SBharadwaj_20240318_Sample_1_4_7_8_2_5/Monocyte_Macrophages"
+# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102/SBharadwaj_20240318_Sample_3_6/data_analysis/07_output/preprocees_sub_clusters/v0.1/v0.1.1/noReIntegration/Project_SBharadwaj_20240318_Sample_3_6_v0.1_v0.1.1.addedInfo.rds"
+# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102/SBharadwaj_20240318_Sample_3_6/data_analysis/04_output/07_output_v0.1.1/seurat_clusters"
 # excluded.clusters <- NULL
 # use_partition <- FALSE
+# reduction.name <- "SCT_UMAP"
+# cluster.name <- "seurat_clusters"
 
 s.obj.name <- basename(path.to.s.obj)
 s.obj <- readRDS(path.to.s.obj)
@@ -151,8 +153,12 @@ all.nodes <- monocle.obj@principal_graph_aux$UMAP$dp_mst %>% t() %>% data.frame(
   mutate(node.name = ifelse(node.degree %in% c(1, 3), node, NA))
 
 all.nodes$node.degree <- factor(all.nodes$node.degree, levels = seq(1, length(unique(all.nodes$node.degree))))
-p1 <- all.nodes %>% ggplot(aes(x = ccaUMAP_1, y = ccaUMAP_2, color = node.degree, label = label)) + geom_point(size = 3) + geom_text_repel(size = 6)
-p2 <- all.nodes %>% ggplot(aes(x = ccaUMAP_1, y = ccaUMAP_2, color = node.degree, label = node.name)) + geom_point(size = 3) + geom_text_repel(size = 6)
+p1 <- all.nodes %>% ggplot(aes_string(x = sprintf("%s_1", str_replace(reduction.name, "_", "")), 
+                               y = sprintf("%s_2", str_replace(reduction.name, "_", "")), 
+                               color = "node.degree", label = "label")) + geom_point(size = 3) + geom_text_repel(size = 6)
+p2 <- all.nodes %>% ggplot(aes_string(x = sprintf("%s_1", str_replace(reduction.name, "_", "")), 
+                               y = sprintf("%s_2", str_replace(reduction.name, "_", "")), 
+                               color = "node.degree", label = "node.name")) + geom_point(size = 3) + geom_text_repel(size = 6)
 p1 + p2
 ```
 

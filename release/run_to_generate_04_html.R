@@ -65,7 +65,19 @@ sample.list <- list(
 
 path.to.rmd <- file.path(path.to.main.src, "04_run_monocle3.Rmd")
 
-for (row_i in seq(1, nrow(samplesheet))){
+library(argparse)
+parser <- ArgumentParser()
+
+parser$add_argument("-i", "--row_i", action="store",
+                    help="Full name of the input project/dataset name")
+
+args <- parser$parse_args()
+
+row_i <- args$row_i
+# row_i <- 21
+
+# for (row_i in seq(1, nrow(samplesheet))){
+  
   PROJECT <- samplesheet[row_i, ]$PROJECT
   dataset_name <- samplesheet[row_i, ]$dataset_name
   re.integration <- samplesheet[row_i, ]$reIntegration
@@ -131,4 +143,5 @@ for (row_i in seq(1, nrow(samplesheet))){
       print(sprintf("File %s exists", file.path(path.to.save.html, save.html.name)))
     }
   }
-}
+  
+# }

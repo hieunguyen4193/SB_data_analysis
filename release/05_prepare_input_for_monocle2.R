@@ -8,25 +8,6 @@ source(file.path(path.to.project.src, "00_import_libraries.R"))
 source(file.path(path.to.project.src, "00_helper_functions.R"))
 
 #####----------------------------------------------------------------------#####
-##### install packages for monocle3
-#####----------------------------------------------------------------------#####
-if ("svglite" %in% installed.packages() == FALSE){
-  install.packages("svglite")
-}
-if ("monocle3" %in% installed.packages() == FALSE){
-  devtools::install_github('cole-trapnell-lab/monocle3', force = TRUE, upgrade = FALSE)
-} else if (packageVersion("monocle3") != "1.3.7"){
-  devtools::install_github('cole-trapnell-lab/monocle3', force = TRUE, upgrade = FALSE)
-}
-if ("tradeSeq" %in% installed.packages() == FALSE){
-  install.packages("https://www.bioconductor.org/packages/release/bioc/src/contrib/tradeSeq_1.20.0.tar.gz", type = "source", repos = NULL)  
-}
-if ("monocle" %in% installed.packages()){
-  remove.packages("monocle")  
-}
-library(monocle3)
-
-#####----------------------------------------------------------------------#####
 ##### MAIN RUN
 #####----------------------------------------------------------------------#####
 
@@ -93,7 +74,7 @@ for (row_i in seq(1, nrow(samplesheet))){
   
   all.cases <- sample.list[[PROJECT]]
   for (cluster.name in to.run.clusters){
-    path.to.s.obj <- samplesheet[row_i, ]$path
+      path.to.s.obj <- samplesheet[row_i, ]$path
     path.to.s.obj <- str_replace(path.to.s.obj, ".rds", ".addedInfo.rds")
     
     path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
@@ -103,6 +84,9 @@ for (row_i in seq(1, nrow(samplesheet))){
     dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
     
     if (file.exists(file.path(path.to.save.output, "monocle2_obj.rds")) == FALSE){
+      print(sprintf("Working on PROJECT %s, dataset %s, and cluster name %s", PROJECT, dataset_name, cluster.name))
+      
+      s.obj <- readRDS(path.to.s.obj)
       data <- GetAssayData(s.obj, slot = "data", assay = "SCT")
       
       pd <- new('AnnotatedDataFrame', data = s.obj@meta.data)
