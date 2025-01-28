@@ -57,4 +57,6 @@ for (full.name in unique(samplesheet$full.dataset.name)){
     print(sprintf("File %s exists", file.path(path.to.monocle2.input, 
                                               sprintf("%s.%s.monocle2.rds", PROJECT, dataset_name))))
   }
+
 }
+

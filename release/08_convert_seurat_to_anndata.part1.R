@@ -24,8 +24,10 @@ for (row_i in seq(1, nrow(samplesheet))){
   
   if (re.integration %in% c("yes", "")){
     reduction.name <- "cca_UMAP"
+    cluster.name <- "cca.cluster.0.5"
   } else {
     reduction.name <- "SCT_UMAP"
+    cluster.name <- "seurat_clusters"
   }
     
   print(sprintf("Working on PROJECT %s, dataset name %s", PROJECT, dataset_name))
@@ -48,7 +50,8 @@ for (row_i in seq(1, nrow(samplesheet))){
     s.obj$UMAP_2 <- s.obj@reductions[[reduction.name]]@cell.embeddings[,2]
     
     write.csv(s.obj@reductions[[reduction.name]]@cell.embeddings, 
-              file=file.path(path.to.seurat2anndata, sprintf('pca_%s.csv', sprintf("%s_%s", PROJECT, dataset_name))), 
+              file=file.path(path.to.seurat2anndata, 
+                             sprintf('pca_%s.csv', sprintf("%s_%s", PROJECT, dataset_name))), 
               quote=F, 
               row.names=F)
     
@@ -63,8 +66,8 @@ for (row_i in seq(1, nrow(samplesheet))){
     write.table( data.frame('gene'=rownames(counts_matrix)),file=file.path(path.to.seurat2anndata, sprintf('gene_names_%s.csv', sprintf("%s_%s", PROJECT, dataset_name))),
                  quote=F,row.names=F,col.names=F)
     
-    coldf <- data.frame(cluster = unique(s.obj$cca.cluster.0.5),
-                        color = hue_pal()(length(unique(s.obj$cca.cluster.0.5))))
+    coldf <- data.frame(cluster = unique(s.obj@meta.data[[cluster.name]]),
+                        color = hue_pal()(length(unique(s.obj@meta.data[[cluster.name]]))))
     write.csv(coldf, file.path(path.to.seurat2anndata, sprintf('colordf_%s.csv', sprintf("%s_%s", PROJECT, dataset_name))))
   } else {
     print(sprintf("File %s exists", file.path(path.to.seurat2anndata, sprintf('colordf_%s.csv', sprintf("%s_%s", PROJECT, dataset_name)))))
