@@ -86,14 +86,17 @@ path.to.save.output <- params$path.to.save.output
 cluster.name <- params$cluster.name
 condition.name <- params$condition.name
 reduction.name <- params$reduction.name
+
 # sample1 <- "treated_gut_CD45"
 # sample2 <- "ctrl_gut_CD45"
-# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/01_output/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5.addedInfo.rds"
-# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102/test_02_DGE_analysis"
-# cluster.name <- "cca.cluster.0.5"
-# cluster.name <- "cell.annotation"
-# condition.name <- "global.condition"
+# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/07_output/preprocees_sub_clusters/v0.1/DC/noReIntegration/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5_v0.1_DC.addedInfo.rds"
+# path.to.save.output <- "/home/hieunguyen/CRC1382/outdir/tmp_output"
+# cluster.name <- "seurat_clusters"
+# condition.name <- "condition"
+# reduction.name <- "SCT_UMAP"
 
+
+dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 library(clusterProfiler)
 if (packageVersion("org.Mm.eg.db") != "3.19.1"){
   install.packages("https://bioconductor.org/packages/release/bioc/src/contrib/AnnotationDbi_1.66.0.tar.gz", 
@@ -112,9 +115,6 @@ print(sprintf("Sample 2: %s", sample2))
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
 s.obj <- readRDS(path.to.s.obj)
-if ("seurat_clusters" %in% colnames(s.obj@meta.data)){
-  s.obj$seurat_clusters <- NULL
-}
 s.obj.original <- s.obj
 ```
 
@@ -176,8 +176,10 @@ DimPlot(object = s.obj, reduction = reduction.name, label = TRUE, label.box = TR
 savename <- sprintf("sample_%s_vs_%s.single_cell.rds", sample1, sample2)
 savename.raw <- sprintf("sample_%s_vs_%s.raw.single_cell.rds", sample1, sample2)
 
-if (cluster.name %in% c("cca.cluster.0.5", "seurat_clusters")){
-  cell.metadata <- s.obj@meta.data %>% rownames_to_column("barcode") %>% subset(select = c(barcode, cca.cluster.0.5))  
+if (cluster.name == "cca.cluster.0.5"){
+  cell.metadata <- s.obj@meta.data %>% rownames_to_column("barcode") %>% subset(select = c(barcode, cca.cluster.0.5)) 
+} else if (cluster.name == "seurat_clusters"){
+  cell.metadata <- s.obj@meta.data %>% rownames_to_column("barcode") %>% subset(select = c(barcode, seurat_clusters)) 
 } else {
   cell.metadata <- s.obj@meta.data %>% rownames_to_column("barcode") %>% subset(select = c(barcode, cell.annotation))
 }
@@ -240,7 +242,7 @@ if (file.exists(file.path(path.to.save.output, savename)) == FALSE){
       tmp.de.markers <- data.frame(data = c("Not enough cells to conduct DE test, either sample1 <= 10 cells or sample2 <= 10 cells"))
       tmp.de.markers.raw <- data.frame(data = c("Not enough cells to conduct DE test, either sample1 <= 10 cells or sample2 <= 10 cells"))
     }
-    if (cluster.name == "cca.cluster.0.5"){
+    if (cluster.name %in% c("cca.cluster.0.5", "seurat_clusters")){
       de.markers[[sprintf("cluster_%s", cluster.id)]] <- tmp.de.markers
       de.markers.raw[[sprintf("cluster_%s", cluster.id)]] <- tmp.de.markers.raw      
     } else {
@@ -262,7 +264,7 @@ de.markers[[sprintf("cluster_%s", 0)]] %>% create_dt()
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-if (cluster.name == "cca.cluster.0.5"){
+if (cluster.name %in%  c("cca.cluster.0.5", "seurat_clusters")){
   all.clusters.in.de.markers <- sort(to_vec( for (item in names(de.markers)) as.numeric(str_split(item, "_")[[1]][[2]]) ))
   all.clusters.in.de.markers <- to_vec( for(item in all.clusters.in.de.markers) sprintf("cluster_%s", item))  
 } else {
@@ -357,11 +359,15 @@ for (cluster.id in all.clusters.in.de.markers){
     
     if (length(c(top10up.genes$Gene, top10down.genes$Gene)) > 1){
       if (cluster.name == "cca.cluster.0.5"){
-              p <- DoHeatmap(object = subset(s.obj, cca.cluster.0.5 == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
+          p <- DoHeatmap(object = subset(s.obj, cca.cluster.0.5 == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
                      features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = condition.name, assay = "SCT") + 
         scale_fill_gradientn(colours = rev(mapal))
-      } else if (cluster.name == "cell.annotation") {
-              p <- DoHeatmap(object = subset(s.obj, cell.annotation == cluster.id ), 
+      } else if (cluster.name == "seurat_clusters"){
+        p <- DoHeatmap(object = subset(s.obj, seurat_clusters == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
+                     features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = condition.name, assay = "SCT") + 
+        scale_fill_gradientn(colours = rev(mapal))
+      }else if (cluster.name == "cell.annotation") {
+          p <- DoHeatmap(object = subset(s.obj, cell.annotation == cluster.id ), 
                      features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = condition.name, assay = "SCT") + 
         scale_fill_gradientn(colours = rev(mapal))
       }
