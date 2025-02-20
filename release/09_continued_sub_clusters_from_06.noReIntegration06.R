@@ -9,7 +9,7 @@ source(file.path(path.to.project.src, "00_helper_functions.R"))
 source(file.path(path.to.project.src, "sub_clustering_indices.R"))
 source(file.path(scrna_pipeline_src, "s8_integration_and_clustering_SeuratV5.R"))
 
-source(file.path(path.to.project.src, "sub_clustering_indices.continued_from_06.R"))
+source(file.path(path.to.project.src, "sub_clustering_indices.continued_from_06.noReIntegration.R"))
 
 #####----------------------------------------------------------------------#####
 # CONFIGURATIONS AND PREPRATIONS
@@ -36,12 +36,13 @@ for (PROJECT in c("SBharadwaj_20240318_Sample_3_6",
 
     ##### continued sub-clustering in 07_output takes input from 06_output with RE INTEGRATION.
     ##### based on Sraddha annotations on RE INTEGRATION SUB CLUSTERING DATA.
-    path.to.06.output <- file.path(path.to.main.output, "06_output", "preprocess_sub_clusters", sub.cluster.idx, "ReIntegration")
+    ##### 17.02.2025: Use the noReIntegration data to continue sub-clustering. 
+    path.to.06.output <- file.path(path.to.main.output, "06_output", "preprocess_sub_clusters", sub.cluster.idx, "noReIntegration")
     
-    path.to.07.output <- file.path(path.to.main.output, "07_output", "raw_sub_clusters", sub.cluster.idx, cont.sub.cluster.idx)
-    dir.create(path.to.07.output, showWarnings = FALSE, recursive = TRUE)
+    path.to.09.output <- file.path(path.to.main.output, "09_output", "raw_sub_clusters", sub.cluster.idx, cont.sub.cluster.idx)
+    dir.create(path.to.09.output, showWarnings = FALSE, recursive = TRUE)
     
-    if (file.exists(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.noIntegration.rds", PROJECT, cont.sub.cluster.idx))) == FALSE){
+    if (file.exists(file.path(path.to.09.output, "s8_output", sprintf("%s_%s.noIntegration.rds", PROJECT, cont.sub.cluster.idx))) == FALSE){
       print("Generating data ...")
       s.obj.raw <- readRDS(file.path(path.to.06.output,sprintf("Project_%s_%s.rds", PROJECT, sub.cluster.idx)))
       s.obj <- subset(s.obj.raw, cca.cluster.0.5 %in% sub_clusters[[PROJECT]][[sub.cluster.idx]][[cont.sub.cluster.idx]])
@@ -61,35 +62,37 @@ for (PROJECT in c("SBharadwaj_20240318_Sample_3_6",
       s.obj.no.integrated <- FindNeighbors(s.obj.no.integrated, reduction = pca_reduction_name, dims = 1:num.PC.used.in.Clustering)
       s.obj.no.integrated <- FindClusters(s.obj.no.integrated, resolution = cluster.resolution, random.seed = 0)
       
-      dir.create(file.path(path.to.07.output, "s8_output"), showWarnings = FALSE, recursive = TRUE)
+      dir.create(file.path(path.to.09.output, "s8_output"), showWarnings = FALSE, recursive = TRUE)
       
-      saveRDS(s.obj.no.integrated, file.path(path.to.07.output, "s8_output", sprintf("%s_%s.noIntegration.rds", PROJECT, cont.sub.cluster.idx)))
+      saveRDS(s.obj.no.integrated, file.path(path.to.09.output, "s8_output", sprintf("%s_%s.noIntegration.rds", PROJECT, cont.sub.cluster.idx)))
     } else {
       print(sprintf("File exists at %s", 
-                    file.path(path.to.07.output, "s8_output", sprintf("%s_%s.noIntegration.rds", PROJECT, cont.sub.cluster.idx))))
+                    file.path(path.to.09.output, "s8_output", sprintf("%s_%s.noIntegration.rds", PROJECT, cont.sub.cluster.idx))))
     }
     
-    ##### re-integration
-    if (file.exists(file.path(path.to.07.output, "s8_output", sprintf("%s_%s.output.s8.rds", PROJECT, cont.sub.cluster.idx))) == FALSE){
-      s.obj.raw <- readRDS(file.path(path.to.06.output, sprintf("Project_%s_%s.rds", PROJECT, sub.cluster.idx)))
-      s.obj <- subset(s.obj.raw, cca.cluster.0.5 %in% sub_clusters[[PROJECT]][[sub.cluster.idx]][[cont.sub.cluster.idx]])
-      
-      DefaultAssay(s.obj) <- "RNA"
-      s.obj <- JoinLayers(s.obj)
-      s.obj.integrated <- s8.integration.and.clustering_V5(s.obj = s.obj,
-                                                           save.RDS.s8 = TRUE,
-                                                           path.to.output = path.to.07.output,
-                                                           use.sctransform = TRUE,
-                                                           num.PCA = num.PCA,
-                                                           num.PC.used.in.UMAP = num.PC.used.in.UMAP,
-                                                           num.PC.used.in.Clustering = num.PC.used.in.Clustering,
-                                                           cluster.resolution = cluster.resolution,
-                                                           vars.to.regress = vars.to.regress,
-                                                           integration.methods = "CCA",
-                                                           PROJECT = sprintf("%s_%s", PROJECT, cont.sub.cluster.idx))
-    } else {
-      print("integrated data exists")
-    }
+    #####------------------------------------------------------------------#####
+    ##### re-integration: DON'T RUN. 
+    #####------------------------------------------------------------------#####
+    # if (file.exists(file.path(path.to.09.output, "s8_output", sprintf("%s_%s.output.s8.rds", PROJECT, cont.sub.cluster.idx))) == FALSE){
+    #   s.obj.raw <- readRDS(file.path(path.to.06.output, sprintf("Project_%s_%s.rds", PROJECT, sub.cluster.idx)))
+    #   s.obj <- subset(s.obj.raw, cca.cluster.0.5 %in% sub_clusters[[PROJECT]][[sub.cluster.idx]][[cont.sub.cluster.idx]])
+    #   
+    #   DefaultAssay(s.obj) <- "RNA"
+    #   s.obj <- JoinLayers(s.obj)
+    #   s.obj.integrated <- s8.integration.and.clustering_V5(s.obj = s.obj,
+    #                                                        save.RDS.s8 = TRUE,
+    #                                                        path.to.output = path.to.09.output,
+    #                                                        use.sctransform = TRUE,
+    #                                                        num.PCA = num.PCA,
+    #                                                        num.PC.used.in.UMAP = num.PC.used.in.UMAP,
+    #                                                        num.PC.used.in.Clustering = num.PC.used.in.Clustering,
+    #                                                        cluster.resolution = cluster.resolution,
+    #                                                        vars.to.regress = vars.to.regress,
+    #                                                        integration.methods = "CCA",
+    #                                                        PROJECT = sprintf("%s_%s", PROJECT, cont.sub.cluster.idx))
+    # } else {
+    #   print("integrated data exists")
+    # }
   }
 }
 

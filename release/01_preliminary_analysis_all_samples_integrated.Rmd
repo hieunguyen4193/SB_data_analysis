@@ -610,23 +610,23 @@ if (file.exists(file.path(path.to.01.output,sprintf("Project_%s.rds", PROJECT)))
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-#### CONVERT seurat object to cloupe file
-if ("loupeR" %in% installed.packages() == FALSE){
-  install.packages("hdf5r")
-  install.packages("/media/hieunguyen/HD01/storage/offline_pkgs/loupeR_Linux.tar.gz", repos = NULL, type = "source")
-}
-
-library(loupeR)
-
-loupeR::setup()
-create_loupe_from_seurat(
-    s.obj,
-    output_dir = file.path(path.to.01.output),
-    output_name = sprintf("PROJECT_%s_cloupe_converted_from_seurat", PROJECT),
-    dedup_clusters = FALSE,
-    executable_path = NULL,
-    force = FALSE
-    )
+# #### CONVERT seurat object to cloupe file
+# if ("loupeR" %in% installed.packages() == FALSE){
+#   install.packages("hdf5r")
+#   install.packages("/media/hieunguyen/HD01/storage/offline_pkgs/loupeR_Linux.tar.gz", repos = NULL, type = "source")
+# }
+# 
+# library(loupeR)
+# 
+# loupeR::setup()
+# create_loupe_from_seurat(
+#     s.obj,
+#     output_dir = file.path(path.to.01.output),
+#     output_name = sprintf("PROJECT_%s_cloupe_converted_from_seurat", PROJECT),
+#     dedup_clusters = FALSE,
+#     executable_path = NULL,
+#     force = FALSE
+#     )
 ```
 
 

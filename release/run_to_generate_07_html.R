@@ -6,9 +6,9 @@ scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_
 
 source(file.path(path.to.project.src, "00_import_libraries.R"))
 source(file.path(path.to.project.src, "00_helper_functions.R"))
-source(file.path(path.to.project.src, "sub_clustering_indices.R"))
 source(file.path(scrna_pipeline_src, "s8_integration_and_clustering_SeuratV5.R"))
-source(file.path(path.to.project.src, "sub_clustering_indices.continued_from_06.R"))
+
+
 
 outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102"
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/release"
@@ -21,17 +21,29 @@ all.PROJECTS <- c("SBharadwaj_20240318_Sample_1_4_7_8",
 
 sub.cluster.idx <- "v0.1"
 
+output.number <- "09_output"
+# output.number <- "07_output"
+
+if (output.number == "07_output"){
+  source(file.path(path.to.project.src, "sub_clustering_indices.continued_from_06.R"))
+  integration.cases <- c(FALSE, TRUE)
+} else if (output.number == "09_output"){
+  source(file.path(path.to.project.src, "sub_clustering_indices.continued_from_06.noReIntegration.R"))
+  integration.cases <- c(FALSE)
+}
+
 for (PROJECT in all.PROJECTS){
   for (cont.sub.cluster.idx in names(sub_clusters[[PROJECT]][[sub.cluster.idx]])){
-    for (integration in c(TRUE, FALSE)){
+    for (integration in integration.cases){
       input.params <- list(
         PROJECT = PROJECT,
         sub.cluster.idx = sub.cluster.idx, 
         cont.sub.cluster.idx = cont.sub.cluster.idx,
         integration = integration,
-        outdir = outdir
+        outdir = outdir,
+        output.number = output.number
       )
-      path.to.html.outputs <- file.path(outdir, PROJECT, "html_output", "07_output", sub.cluster.idx, cont.sub.cluster.idx)
+      path.to.html.outputs <- file.path(outdir, PROJECT, "html_output", output.number, sub.cluster.idx, cont.sub.cluster.idx)
       dir.create(path.to.html.outputs, showWarnings = FALSE, recursive = TRUE)
       
       path.to.Rmd.file <- file.path(path.to.main.src, "07_continued_sub_clusters_from_06.Rmd")

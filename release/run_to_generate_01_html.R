@@ -13,18 +13,9 @@ outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20240318"
 
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/release"
 
-# all.PROJECTS <- c("SBharadwaj_20240318_Sample_2_5",
-#                   "SBharadwaj_20240318_Sample_1_4", 
-#                   "SBharadwaj_20240318_Sample_3_6",
-#                   "SBharadwaj_20240318_Sample_1_4_7_8",
-#                   "SBharadwaj_20240318_Sample_4_8",
-#                   "SBharadwaj_20240318_Sample_1_7",
-#                   "SBharadwaj_20240318_Sample_7_8",
-#                   "SBharadwaj_20240318_Sample_2_3_5_6",
-#                   "SBharadwaj_20240318_Sample_1_4_7_8_2_5")
-
 outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102"
-  
+dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
+
 all.PROJECTS <- c("SBharadwaj_20240318_Sample_1_4_7_8",
                   "SBharadwaj_20240318_Sample_1_4_7_8_2_5",
                   "SBharadwaj_20240318_Sample_3_6")

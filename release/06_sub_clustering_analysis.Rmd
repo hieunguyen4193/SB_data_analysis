@@ -79,7 +79,7 @@ integration <- params$integration
 
 path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(path.to.main.input, "data_analysis")
-path.to.06.output <- file.path(path.to.main.output, "06_output", "preprocees_sub_clusters", sub.cluster.idx)
+path.to.06.output <- file.path(path.to.main.output, "06_output", "preprocess_sub_clusters", sub.cluster.idx)
 dir.create(path.to.06.output, showWarnings = FALSE, recursive = TRUE)
 path.to.save.subclusters <- file.path(path.to.main.output, "06_output", "raw_sub_clusters", sub.cluster.idx)
 ```
@@ -397,24 +397,24 @@ if (file.exists(file.path(path.to.06.output,sprintf("Project_%s_%s.rds", PROJECT
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
 #### CONVERT seurat object to cloupe file
-if ("loupeR" %in% installed.packages() == FALSE){
-  install.packages("hdf5r")
-  install.packages("/media/hieunguyen/HD01/storage/offline_pkgs/loupeR_Linux.tar.gz", repos = NULL, type = "source")
-}
-
-if (file.exists(file.path(path.to.06.output, sprintf("PROJECT_%s_%s_cloupe_converted_from_seurat", PROJECT, 
-                          sub.cluster.idx))) == FALSE){
-  library(loupeR)
-  loupeR::setup()
-  create_loupe_from_seurat(
-      s.obj,
-      output_dir = file.path(path.to.06.output),
-      output_name = sprintf("PROJECT_%s_%s_cloupe_converted_from_seurat", PROJECT, 
-                            sub.cluster.idx),
-      dedup_clusters = FALSE,
-      executable_path = NULL,
-      force = TRUE)  
-}
+# if ("loupeR" %in% installed.packages() == FALSE){
+#   install.packages("hdf5r")
+#   install.packages("/media/hieunguyen/HD01/storage/offline_pkgs/loupeR_Linux.tar.gz", repos = NULL, type = "source")
+# }
+# 
+# if (file.exists(file.path(path.to.06.output, sprintf("PROJECT_%s_%s_cloupe_converted_from_seurat", PROJECT, 
+#                           sub.cluster.idx))) == FALSE){
+#   library(loupeR)
+#   loupeR::setup()
+#   create_loupe_from_seurat(
+#       s.obj,
+#       output_dir = file.path(path.to.06.output),
+#       output_name = sprintf("PROJECT_%s_%s_cloupe_converted_from_seurat", PROJECT, 
+#                             sub.cluster.idx),
+#       dedup_clusters = FALSE,
+#       executable_path = NULL,
+#       force = TRUE)  
+# }
 
 ```
 

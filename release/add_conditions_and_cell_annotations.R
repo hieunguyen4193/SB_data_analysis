@@ -16,7 +16,17 @@ outdir <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102"
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/SBharadwaj/release"
 samplesheet <- read.csv(file.path(path.to.main.src, "SampleSheet_all_seurat_objects.csv"))
 
-rerun <- TRUE
+##### check if data exists
+for (p in samplesheet$path){
+  if (file.exists(p) == TRUE){
+    # print("Exists")
+  } else {
+    print(p)
+    print("Missing")
+  }
+}
+
+rerun <- FALSE
 for (row_i in seq(1, nrow(samplesheet))){
   PROJECT <- samplesheet[row_i, ]$PROJECT
   path.to.s.obj <- samplesheet[row_i, ]$path

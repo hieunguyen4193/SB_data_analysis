@@ -72,7 +72,7 @@ path.to.07.output <- file.path(path.to.main.output, "07_output")
 
 if (integration == TRUE){
  path.to.s.obj <- file.path(path.to.07.output, 
-                           "preprocees_sub_clusters", 
+                           "preprocess_sub_clusters", 
                            "v0.1", 
                            "DC", 
                            "ReIntegration", 
@@ -82,7 +82,7 @@ if (integration == TRUE){
  path.to.01.output <- file.path(path.to.01.output, "ReIntegration")
 } else {
   path.to.s.obj <- file.path(path.to.07.output, 
-                           "preprocees_sub_clusters", 
+                           "preprocess_sub_clusters", 
                            "v0.1", 
                            "DC", 
                            "noReIntegration", 
