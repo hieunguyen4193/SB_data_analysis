@@ -42,8 +42,6 @@ sample.list <- list(
   )
 )
 
-path.to.rmd <- file.path(path.to.main.src, "03_CellChat_general_analysis.Rmd")
-
 path.to.save.cloupe.file <- file.path(outdir, "cloupe_files")
 dir.create(path.to.save.cloupe.file, showWarnings = FALSE, recursive = TRUE)
 
@@ -91,7 +89,7 @@ for (row_i in seq(1, nrow(samplesheet))){
     output_name = save.cloupe.name,
     dedup_clusters = FALSE,
     executable_path = NULL,
-    force = FALSE
+    force = TRUE
   )
 }
 

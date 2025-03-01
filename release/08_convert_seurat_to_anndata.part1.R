@@ -16,6 +16,8 @@ samplesheet <- read.csv(file.path(path.to.main.src, "SampleSheet_all_seurat_obje
 samplesheet <- samplesheet %>% rowwise() %>%
   mutate(dataset_name = ifelse(reIntegration == "yes", sprintf("%s_reIntegration", dataset_name), dataset_name))
 
+rerun <- TRUE
+
 for (row_i in seq(1, nrow(samplesheet))){
   PROJECT <- samplesheet[row_i, ]$PROJECT
   dataset_name <- samplesheet[row_i, ]$dataset_name
@@ -30,7 +32,11 @@ for (row_i in seq(1, nrow(samplesheet))){
     cluster.name <- "seurat_clusters"
   }
     
-  print(sprintf("Working on PROJECT %s, dataset name %s", PROJECT, dataset_name))
+  print(sprintf("Working on PROJECT %s, dataset name %s, reduction.name %s, cluster.name %s", 
+                PROJECT, 
+                dataset_name,
+                reduction.name, 
+                cluster.name))
   
   path.to.s.obj <- str_replace(path.to.s.obj, ".rds", ".addedInfo.rds")
   
@@ -41,7 +47,7 @@ for (row_i in seq(1, nrow(samplesheet))){
   path.to.seurat2anndata <- file.path(path.to.08.output, "seurat2anndata")
   dir.create(path.to.seurat2anndata, showWarnings = FALSE, recursive = TRUE)
   
-  if (file.exists(file.path(path.to.seurat2anndata, sprintf('colordf_%s.csv', sprintf("%s_%s", PROJECT, dataset_name)))) == FALSE){
+  if (file.exists(file.path(path.to.seurat2anndata, sprintf('colordf_%s.csv', sprintf("%s_%s", PROJECT, dataset_name)))) == FALSE | rerun == TRUE){
     s.obj <- readRDS(path.to.s.obj)
     
     s.obj$barcode <- colnames(s.obj)

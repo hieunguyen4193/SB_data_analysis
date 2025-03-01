@@ -87,15 +87,6 @@ cluster.name <- params$cluster.name
 condition.name <- params$condition.name
 reduction.name <- params$reduction.name
 
-# sample1 <- "treated_gut_CD45"
-# sample2 <- "ctrl_gut_CD45"
-# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/07_output/preprocees_sub_clusters/v0.1/DC/noReIntegration/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5_v0.1_DC.addedInfo.rds"
-# path.to.save.output <- "/home/hieunguyen/CRC1382/outdir/tmp_output"
-# cluster.name <- "seurat_clusters"
-# condition.name <- "condition"
-# reduction.name <- "SCT_UMAP"
-
-
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 library(clusterProfiler)
 if (packageVersion("org.Mm.eg.db") != "3.19.1"){
@@ -356,19 +347,26 @@ for (cluster.id in all.clusters.in.de.markers){
   } else {
     top10up.genes <- inputdf %>% subset(p_val_adj <= 0.05 & avg_log2FC > 0) %>% arrange(desc(avg_log2FC)) %>% head(20)
     top10down.genes <- inputdf %>% subset(p_val_adj <= 0.05 & avg_log2FC < 0) %>% arrange(desc(avg_log2FC)) %>% tail(20)
-    
-    if (length(c(top10up.genes$Gene, top10down.genes$Gene)) > 1){
+    to.plot.heatmap.genes <- c(top10up.genes$Gene, top10down.genes$Gene)
+    sct.scale.genes <- row.names(GetAssayData(s.obj, slot = "scale.data", assay = "SCT"))
+    if (length(intersect(to.plot.heatmap.genes, sct.scale.genes)) > 1){
       if (cluster.name == "cca.cluster.0.5"){
           p <- DoHeatmap(object = subset(s.obj, cca.cluster.0.5 == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
-                     features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = condition.name, assay = "SCT") + 
+                     features = to.plot.heatmap.genes, 
+                     group.by = condition.name, 
+                     assay = "SCT") + 
         scale_fill_gradientn(colours = rev(mapal))
       } else if (cluster.name == "seurat_clusters"){
         p <- DoHeatmap(object = subset(s.obj, seurat_clusters == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
-                     features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = condition.name, assay = "SCT") + 
+                     features = to.plot.heatmap.genes, 
+                     group.by = condition.name, 
+                     assay = "SCT") + 
         scale_fill_gradientn(colours = rev(mapal))
       }else if (cluster.name == "cell.annotation") {
           p <- DoHeatmap(object = subset(s.obj, cell.annotation == cluster.id ), 
-                     features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = condition.name, assay = "SCT") + 
+                     features = to.plot.heatmap.genes, 
+                     group.by = condition.name, 
+                     assay = "SCT") + 
         scale_fill_gradientn(colours = rev(mapal))
       }
 

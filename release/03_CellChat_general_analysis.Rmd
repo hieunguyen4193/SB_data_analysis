@@ -67,13 +67,6 @@ condition.name <- params$condition.name
 cluster.name <- params$cluster.name
 reduction.name <- params$reduction.name
 
-# sample.id <- "treated_gut_myeloid"
-# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/06_output/preprocees_sub_clusters/v0.1/noReIntegration/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5_v0.1.addedInfo.rds"
-# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/03_output/06_output_v0.1/seurat_clusters/name/treated_gut_myeloid"
-# filter10cells <- "Filter10"
-# condition.name <- "name"
-# reduction.name <- "SCT_UMAP"
-# cluster.name <- "seurat_clusters"
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 s.obj <- readRDS(path.to.s.obj)
@@ -127,14 +120,23 @@ DimPlot(object = s.obj, reduction = reduction.name, label = TRUE, label.box = TR
 ##### Get the input data matrix
 data.input <- GetAssayData(object = s.obj, slot = "data", assay = "SCT")
 if (cluster.name %in% c("cca.cluster.0.5", "seurat_clusters")){
-  meta.data <- s.obj@meta.data %>% 
-  rownames_to_column("barcode") %>%
-  rowwise() %>%
-  mutate(cluster = sprintf("cluster_%s", cca.cluster.0.5)) %>%
-  column_to_rownames("barcode")
-  num.cluster <- length(unique(s.obj$cca.cluster.0.5))
+  if (cluster.name == "cca.cluster.0.5"){
+    meta.data <- s.obj@meta.data %>% 
+      rownames_to_column("barcode") %>%
+      rowwise() %>%
+      mutate(cluster = sprintf("cluster_%s", cca.cluster.0.5)) %>%
+      column_to_rownames("barcode")
+  } else if (cluster.name == "seurat_clusters"){
+    meta.data <- s.obj@meta.data %>% 
+      rownames_to_column("barcode") %>%
+      rowwise() %>%
+      mutate(cluster = sprintf("cluster_%s", seurat_clusters)) %>%
+      column_to_rownames("barcode")
+  }
   
-  all.cluster.idx <- to_vec (for (cluster.id in unique(s.obj$cca.cluster.0.5)) str_replace(cluster.id, "cluster_", "")) %>% as.numeric()
+  num.cluster <- length(unique(s.obj@meta.data[[cluster.name]]))
+  
+  all.cluster.idx <- to_vec (for (cluster.id in unique(s.obj@meta.data[[cluster.name]])) str_replace(cluster.id, "cluster_", "")) %>% as.numeric()
   
   meta.data$cluster <- factor(meta.data$cluster, levels = to_vec ( for (i in sort(all.cluster.idx)) sprintf("cluster_%s", i) ))
 } else if (cluster.name == "cell.annotation"){
