@@ -74,7 +74,7 @@ for (row_i in seq(1, nrow(samplesheet))){
   
   all.cases <- sample.list[[PROJECT]]
   for (cluster.name in to.run.clusters){
-      path.to.s.obj <- samplesheet[row_i, ]$path
+    path.to.s.obj <- samplesheet[row_i, ]$path
     path.to.s.obj <- str_replace(path.to.s.obj, ".rds", ".addedInfo.rds")
     
     path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")

@@ -1,5 +1,5 @@
 #####----------------------------------------------------------------------#####
-##### 01
+##### generate cloupe files for all data in the analysis, at all steps. 
 #####----------------------------------------------------------------------#####
 gc()
 rm(list = ls())
@@ -58,24 +58,6 @@ loupeR::setup()
 for (row_i in seq(1, nrow(samplesheet))){
   PROJECT <- samplesheet[row_i, ]$PROJECT
   dataset_name <- samplesheet[row_i, ]$dataset_name
-  re.integration <- samplesheet[row_i, ]$reIntegration
-  if (dataset_name == "full"){
-    if (re.integration %in% c("yes", "")){
-      to.run.clusters <- c("cca.cluster.0.5", "cell.annotation")
-      reduction.name <- "cca_UMAP"
-    } else {
-      to.run.clusters <- c("seurat_clusters", "cell.annotation")
-      reduction.name <- "SCT_UMAP"
-    }
-  } else {
-    if (re.integration %in% c("yes", "")){
-      to.run.clusters <- c("cca.cluster.0.5")      
-      reduction.name <- "cca_UMAP"
-    } else {
-      to.run.clusters <- c("seurat_clusters")
-      reduction.name <- "SCT_UMAP"
-    }
-  }
   path.to.s.obj <- samplesheet[row_i, ]$path
   path.to.s.obj <- str_replace(path.to.s.obj, ".rds", ".addedInfo.rds")
   save.cloupe.name <- sprintf("%s_%s", PROJECT, dataset_name)

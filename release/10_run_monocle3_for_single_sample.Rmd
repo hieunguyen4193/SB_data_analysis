@@ -68,6 +68,15 @@ cluster.name <- params$cluster.name
 sample.id <- params$sample.id
 condition.name <- params$condition.name
 
+# path.to.s.obj <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/01_output/Project_SBharadwaj_20240318_Sample_1_4_7_8_2_5.addedInfo.rds"
+# path.to.save.output <- "/media/hieunguyen/HD01/outdir/CRC1382/SBharadwaj_20250102/SBharadwaj_20240318_Sample_1_4_7_8_2_5/data_analysis/10_output/full/cca.cluster.0.5/name/treated_gut_myeloid"
+# excluded.clusters <- NULL
+# use_partition <- FALSE
+# reduction.name <- "cca_UMAP"
+# cluster.name <- "cca.cluster.0.5"
+# sample.id <- "treated_gut_myeloid"
+# condition.name <- "name"
+
 s.obj.name <- basename(path.to.s.obj)
 s.obj <- readRDS(path.to.s.obj)
 
@@ -299,8 +308,9 @@ y_to_cells$Y <- y_to_cells$V1
 root <- monocle.obj@principal_graph_aux$UMAP$root_pr_nodes
 
 # Get the other endpoints
-# endpoints <- names(which(igraph::degree(mst) == 1))
-endpoints <- c("Y_3", "Y_12", "Y_16")
+endpoints <- names(which(igraph::degree(mst) == 1))
+# endpoints <- c("Y_3", "Y_12", "Y_16")
+
 if (length(endpoints) > 1){
   endpoints <- endpoints[!endpoints %in% root]  
 } 
