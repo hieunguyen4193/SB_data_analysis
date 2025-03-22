@@ -16,7 +16,7 @@ samplesheet <- read.csv(file.path(path.to.main.src, "SampleSheet_all_seurat_obje
 samplesheet <- samplesheet %>% rowwise() %>%
   mutate(dataset_name = ifelse(reIntegration == "yes", sprintf("%s_reIntegration", dataset_name), dataset_name))
 
-rerun <- TRUE
+rerun <- FALSE
 
 for (row_i in seq(1, nrow(samplesheet))){
   PROJECT <- samplesheet[row_i, ]$PROJECT
@@ -48,6 +48,11 @@ for (row_i in seq(1, nrow(samplesheet))){
   
   path.to.seurat2anndata <- file.path(path.to.08.output, "seurat2anndata")
   dir.create(path.to.seurat2anndata, showWarnings = FALSE, recursive = TRUE)
+  
+  # currently we don't have any cell annotation for the dataset SBharadwaj_20240318_Sample_3_6
+  if (PROJECT == "SBharadwaj_20240318_Sample_3_6"){
+    to.run.clusters <- setdiff(to.run.clusters, "cell.annotation")
+  }
   
   for (cluster.name in to.run.clusters){
     if (file.exists(file.path(path.to.seurat2anndata, sprintf('colordf_%s.csv', sprintf("%s_%s_%s", PROJECT, dataset_name, cluster.name)))) == FALSE | rerun == TRUE){
