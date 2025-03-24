@@ -239,7 +239,6 @@ sig_monocle.obj_graph_test_res %>% mutate_if(is.numeric, round, 6) %>% create_dt
 gt0.5_genedf <- subset(sig_monocle.obj_graph_test_res, sig_monocle.obj_graph_test_res$morans_I >= 0.5) %>%
   arrange(desc(morans_I)) %>% head(100)
 gt0.5_genes <- gt0.5_genedf$gene_name
-
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=10, fig.width=20}
@@ -262,7 +261,6 @@ for (selected.starting.point in list_of_principal_points){
            width = 20, height = 10, device = "svg", dpi = 300)
   }    
 }
-
 ```
 
 # TradeSeq Test
